@@ -1,4 +1,4 @@
-namespace OrganizaDinDin.Models
+namespace OrganizaDinDin.Application.DTOs
 {
     public class LoginDto
     {

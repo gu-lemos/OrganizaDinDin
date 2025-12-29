@@ -1,4 +1,5 @@
-using OrganizaDinDin.Models;
+using OrganizaDinDin.Application.DTOs;
+using OrganizaDinDin.Domain.Entities;
 
 namespace OrganizaDinDin.Application.Interfaces
 {

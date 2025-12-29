@@ -1,4 +1,4 @@
-﻿namespace OrganizaDinDin.Models
+﻿namespace OrganizaDinDin.Domain.Entities
 {
     using OrganizaDinDin.Enum;
     using Google.Cloud.Firestore;

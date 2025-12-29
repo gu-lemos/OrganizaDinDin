@@ -1,6 +1,6 @@
 using Google.Cloud.Firestore;
 
-namespace OrganizaDinDin.Models
+namespace OrganizaDinDin.Domain.Entities
 {
     [FirestoreData]
     public class Usuario

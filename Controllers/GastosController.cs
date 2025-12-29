@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using OrganizaDinDin.Application.Interfaces;
-using OrganizaDinDin.Models;
+using OrganizaDinDin.Application.DTOs;
 
 namespace OrganizaDinDin.Controllers
 {

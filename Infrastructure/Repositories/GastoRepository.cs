@@ -1,6 +1,6 @@
 using Google.Cloud.Firestore;
 using OrganizaDinDin.Domain.Interfaces;
-using OrganizaDinDin.Models;
+using OrganizaDinDin.Domain.Entities;
 
 namespace OrganizaDinDin.Infrastructure.Repositories
 {

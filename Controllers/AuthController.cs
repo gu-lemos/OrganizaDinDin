@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using OrganizaDinDin.Application.Interfaces;
-using OrganizaDinDin.Models;
+using OrganizaDinDin.Application.DTOs;
 
 namespace OrganizaDinDin.Controllers
 {
