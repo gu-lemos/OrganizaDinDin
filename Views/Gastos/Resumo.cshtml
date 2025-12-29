@@ -1,0 +1,212 @@
+@model List<Gasto>
+@{
+    ViewData["Title"] = "Resumo de OrganizaDinDin";
+    var totalGeral = Model.Sum(g => g.Valor) / 100.0;
+    var OrganizaDinDinPorTipo = Model.GroupBy(g => g.Tipo)
+                             .Select(g => new {
+                                 Tipo = g.Key,
+                                 Total = g.Sum(x => x.Valor) / 100.0,
+                                 Quantidade = g.Count()
+                             })
+                             .OrderByDescending(x => x.Total)
+                             .ToList();
+}
+
+<div class="page-header mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1><i class="bi bi-wallet"></i> Gerenciamento de Gastos</h1>
+    </div>
+
+    <!-- Navegação por Abas -->
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a class="nav-link" href="/Gastos/Index">Listagem</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="/Gastos/Resumo">Resumo</a>
+        </li>
+    </ul>
+</div>
+
+<!-- Cards de Resumo -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total Gasto</h5>
+                <h2 class="card-text">R$ @totalGeral.ToString("N2")</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Total de Lançamentos</h5>
+                <h2 class="card-text">@Model.Count</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Ticket Médio</h5>
+                <h2 class="card-text">R$ @(Model.Any() ? (totalGeral / Model.Count).ToString("N2") : "0,00")</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráficos -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>OrganizaDinDin por Tipo</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="chartPorTipo"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Distribuição Percentual</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="chartPizza"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabela de Resumo por Tipo -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Detalhamento por Tipo</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th>
+                            <th>Quantidade</th>
+                            <th>Valor Total</th>
+                            <th>Percentual</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in OrganizaDinDinPorTipo)
+                        {
+                            var percentual = (item.Total / totalGeral) * 100;
+                            <tr>
+                                <td><span class="badge bg-info">@item.Tipo.GetDescription()</span></td>
+                                <td>@item.Quantidade</td>
+                                <td class="text-success fw-bold">R$ @item.Total.ToString("N2")</td>
+                                <td>
+                                    <div class="progress" style="height: 25px;">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: @percentual.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)%" aria-valuenow="@percentual" aria-valuemin="0" aria-valuemax="100">
+                                            @percentual.ToString("N1")%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Dados para os gráficos
+        const OrganizaDinDinPorTipo = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            OrganizaDinDinPorTipo.Select(g => new {
+                Tipo = g.Tipo.GetDescription(),
+                Total = g.Total
+            })
+        ));
+
+        const labels = OrganizaDinDinPorTipo.map(g => g.Tipo);
+        const valores = OrganizaDinDinPorTipo.map(g => g.Total);
+
+        // Cores para os gráficos
+        const cores = [
+            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+            '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0'
+        ];
+
+        // Gráfico de Barras
+        const ctxBar = document.getElementById('chartPorTipo').getContext('2d');
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Valor Total (R$)',
+                    data: valores,
+                    backgroundColor: cores,
+                    borderColor: cores.map(c => c),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Gráfico de Pizza
+        const ctxPie = document.getElementById('chartPizza').getContext('2d');
+        new Chart(ctxPie, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: valores,
+                    backgroundColor: cores,
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return label + ': R$ ' + value.toFixed(2) + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}

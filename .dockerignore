@@ -1,0 +1,33 @@
+# Pastas de build
+**/bin/
+**/obj/
+**/out/
+
+# Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Arquivos sensíveis (serão configurados via variáveis de ambiente)
+firebase-credentials.json
+*-firebase-adminsdk-*.json
+appsettings.Development.json
+appsettings.Production.json
+*.env
+
+# Documentação e outros
+README.md
+LICENSE
+*.md
+
+# Arquivos temporários
+*.log
+*.tmp
+*.temp
