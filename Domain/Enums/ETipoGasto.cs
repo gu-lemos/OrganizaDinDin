@@ -4,10 +4,10 @@ namespace OrganizaDinDin.Domain.Enums
 {
     public enum ETipoGasto
     {
-        [Description("Entrada")]
+        [Description("Ato")]
         Entrada,
 
-        [Description("Parcela da entrada")]
+        [Description("Entrada parcelada")]
         ParcelaEntrada,
 
         [Description("Evolução de obra")]
