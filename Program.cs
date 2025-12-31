@@ -29,14 +29,12 @@ builder.Services.AddSingleton(provider =>
 
     if (!string.IsNullOrEmpty(credentialsJson))
     {
-        // Ambiente de produção (Render) - usa JSON da variável de ambiente
         var credentialsPath = Path.Combine(Path.GetTempPath(), "firebase-credentials.json");
         File.WriteAllText(credentialsPath, credentialsJson);
         Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialsPath);
     }
     else
     {
-        // Ambiente local - usa arquivo firebase-credentials.json
         Environment.SetEnvironmentVariable(
             "GOOGLE_APPLICATION_CREDENTIALS",
             "firebase-credentials.json");

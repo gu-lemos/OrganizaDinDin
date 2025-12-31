@@ -4,15 +4,10 @@ using OrganizaDinDin.Domain.Entities;
 
 namespace OrganizaDinDin.Infrastructure.Repositories
 {
-    public class UsuarioRepository : IUsuarioRepository
+    public class UsuarioRepository(FirestoreDb firestoreDb) : IUsuarioRepository
     {
-        private readonly FirestoreDb _firestoreDb;
+        private readonly FirestoreDb _firestoreDb = firestoreDb;
         private const string CollectionName = "usuarios";
-
-        public UsuarioRepository(FirestoreDb firestoreDb)
-        {
-            _firestoreDb = firestoreDb;
-        }
 
         public async Task<Usuario?> GetByEmailAsync(string email)
         {
@@ -20,10 +15,10 @@ namespace OrganizaDinDin.Infrastructure.Repositories
             var query = collection.WhereEqualTo("Email", email);
             var snapshot = await query.GetSnapshotAsync();
 
-            if (!snapshot.Any())
+            if (snapshot.Count == 0)
                 return null;
 
-            return snapshot.Documents.First().ConvertTo<Usuario>();
+            return snapshot.Documents[0].ConvertTo<Usuario>();
         }
 
         public async Task<Usuario> CreateAsync(Usuario usuario)

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace OrganizaDinDin.Enum
+namespace OrganizaDinDin.Domain.Enums
 {
     public enum ETipoGasto
     {

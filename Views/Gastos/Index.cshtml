@@ -1,25 +1,18 @@
+@using OrganizaDinDin.Domain.Enums
 @model List<Gasto>
 @{
     ViewData["Title"] = "Gerenciamento de Gastos";
 }
 
-<div class="page-header mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1><i class="bi bi-wallet"></i> Gerenciamento de Gastos</h1>
-        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#gastoModal" onclick="abrirModalCriar()">
-            + Novo Gasto
-        </button>
-    </div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/gastos.css" asp-append-version="true" />
+}
 
-    <!-- Navegação por Abas -->
-    <ul class="nav nav-tabs">
-        <li class="nav-item">
-            <a class="nav-link active" href="/Gastos/Index">Listagem</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="/Gastos/Resumo">Resumo</a>
-        </li>
-    </ul>
+<div class="page-title d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+    <h1 class="mb-0"><i class="bi bi-wallet"></i> Gerenciamento de Gastos</h1>
+    <button class="btn btn-dark" id="btnNovoGasto" data-bs-toggle="modal" data-bs-target="#gastoModal">
+        <i class="bi bi-plus-circle me-2"></i>Novo Gasto
+    </button>
 </div>
 
 <div class="table-responsive">
@@ -33,19 +26,19 @@
                 <th class="text-center">Ações</th>
             </tr>
         </thead>
-        <tbody id="OrganizaDinDinTableBody">
+        <tbody id="gastosTableBody">
             @foreach (var gasto in Model)
             {
                 <tr data-id="@gasto.Id">
                     <td>@gasto.Descricao</td>
-                    <td><span class="badge badge-tipo bg-info">@gasto.Tipo.GetDescription()</span></td>
+                    <td><span class="badge badge-tipo bg-dark">@gasto.Tipo.GetDescription()</span></td>
                     <td>@gasto.Data.ToString("dd/MM/yyyy")</td>
                     <td class="valor-positivo">R$ @((gasto.Valor / 100.0).ToString("N2"))</td>
                     <td class="text-center">
-                        <button class="btn btn-sm btn-warning" onclick="editarGasto('@gasto.Id')" title="Editar">
+                        <button class="btn btn-sm btn-warning btn-editar" data-gasto-id="@gasto.Id" title="Editar">
                             ✏️
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="deletarGasto('@gasto.Id')" title="Excluir">
+                        <button class="btn btn-sm btn-danger btn-deletar" data-gasto-id="@gasto.Id" title="Excluir">
                             🗑️
                         </button>
                     </td>
@@ -57,7 +50,7 @@
             <tfoot>
                 <tr class="table-secondary">
                     <td colspan="3" class="text-end fw-bold">TOTAL:</td>
-                    <td class="fw-bold text-success">R$ @((Model.Sum(g => g.Valor) / 100.0).ToString("N2"))</td>
+                    <td class="valor-positivo">R$ @((Model.Sum(g => g.Valor) / 100.0).ToString("N2"))</td>
                     <td></td>
                 </tr>
             </tfoot>
@@ -65,52 +58,91 @@
     </table>
 </div>
 
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Tem certeza que deseja deletar este gasto?</p>
+                <p class="text-muted small mb-0">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarDelete">Deletar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal para Criar/Editar Gasto -->
 <div class="modal fade" id="gastoModal" tabindex="-1" aria-labelledby="gastoModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header ">
                 <h5 class="modal-title" id="gastoModalLabel">Novo Gasto</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="gastoForm">
+                <form id="gastoForm" novalidate>
                     <input type="hidden" id="gastoId" />
 
                     <div class="mb-3">
                         <label for="descricao" class="form-label">Descrição</label>
-                        <input type="text" class="form-control" id="descricao" required>
+                        <input type="text"
+                               class="form-control"
+                               id="descricao"
+                               maxlength="200">
+                        <div class="invalid-feedback">
+                            A descrição deve ter entre 5 e 200 caracteres
+                        </div>
                     </div>
 
                     <div class="mb-3">
                         <label for="tipo" class="form-label">Tipo</label>
-                        <select class="form-select" id="tipo" required>
-                            <option value="0">Entrada</option>
-                            <option value="1">Parcela da entrada</option>
-                            <option value="2">Evolução de obra</option>
-                            <option value="3">Financiamento</option>
-                            <option value="4">Reforma</option>
-                            <option value="5">Registro, documentação e taxas</option>
-                            <option value="6">Móveis</option>
-                            <option value="7">Eletrodomésticos</option>
-                            <option value="8">Outros</option>
+                        <select class="form-select" id="tipo">
+                            <option value="">Selecione um tipo</option>
+                            @foreach (ETipoGasto tipo in System.Enum.GetValues(typeof(ETipoGasto)))
+                            {
+                                <option value="@((int)tipo)">@tipo.GetDescription()</option>
+                            }
                         </select>
+                        <div class="invalid-feedback">
+                            O tipo é obrigatório
+                        </div>
                     </div>
 
                     <div class="mb-3">
                         <label for="data" class="form-label">Data</label>
-                        <input type="date" class="form-control" id="data" required>
+                        <input type="date"
+                               class="form-control"
+                               id="data">
+                        <div class="invalid-feedback">
+                            A data é obrigatória
+                        </div>
                     </div>
 
                     <div class="mb-3">
                         <label for="valor" class="form-label">Valor</label>
-                        <input type="number" step="0.01" class="form-control" id="valor" required>
+                        <div class="input-group has-validation">
+                            <span class="input-group-text">R$</span>
+                            <input type="text"
+                                   class="form-control"
+                                   id="valor"
+                                   placeholder="0,00">
+                            <div class="invalid-feedback">
+                                O valor deve ser maior que zero
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" onclick="salvarGasto()">Salvar</button>
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-dark" id="btnSalvarGasto">Salvar</button>
             </div>
         </div>
     </div>
@@ -118,84 +150,7 @@
 
 @section Scripts {
     <script>
-        let OrganizaDinDin = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model));
-
-        function abrirModalCriar() {
-            document.getElementById('gastoModalLabel').textContent = 'Novo Gasto';
-            document.getElementById('gastoForm').reset();
-            document.getElementById('gastoId').value = '';
-        }
-
-        function editarGasto(id) {
-            const gasto = OrganizaDinDin.find(g => g.Id === id);
-            if (!gasto) return;
-
-            document.getElementById('gastoModalLabel').textContent = 'Editar Gasto';
-            document.getElementById('gastoId').value = gasto.Id;
-            document.getElementById('descricao').value = gasto.Descricao;
-            document.getElementById('tipo').value = gasto.Tipo;
-            document.getElementById('data').value = gasto.Data.split('T')[0];
-            document.getElementById('valor').value = (gasto.Valor / 100).toFixed(2); // Converte centavos para reais
-
-            new bootstrap.Modal(document.getElementById('gastoModal')).show();
-        }
-
-        async function salvarGasto() {
-            const id = document.getElementById('gastoId').value;
-            const valorInput = parseFloat(document.getElementById('valor').value);
-            const valorCentavos = Math.round(valorInput * 100); // Converte para centavos
-
-            const gasto = {
-                Id: id || null,
-                Descricao: document.getElementById('descricao').value,
-                Tipo: parseInt(document.getElementById('tipo').value),
-                Data: document.getElementById('data').value,
-                Valor: valorCentavos
-            };
-
-            const url = id ? '/Gastos/Update' : '/Gastos/Create';
-
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(gasto)
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    alert(id ? 'Gasto atualizado com sucesso!' : 'Gasto criado com sucesso!');
-                    location.reload();
-                } else {
-                    alert('Erro: ' + result.message);
-                }
-            } catch (error) {
-                alert('Erro ao salvar gasto: ' + error);
-            }
-        }
-
-        async function deletarGasto(id) {
-            if (!confirm('Tem certeza que deseja deletar este gasto?')) return;
-
-            try {
-                const response = await fetch('/Gastos/Delete', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(id)
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert('Gasto deletado com sucesso!');
-                    location.reload();
-                } else {
-                    alert('Erro: ' + data.message);
-                }
-            } catch (error) {
-                alert('Erro ao deletar gasto: ' + error);
-            }
-        }
+        window.gastosData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model));
     </script>
+    <script src="~/js/gastos.js" asp-append-version="true"></script>
 }

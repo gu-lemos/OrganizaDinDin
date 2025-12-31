@@ -1,7 +1,7 @@
 ﻿namespace OrganizaDinDin.Domain.Entities
 {
-    using OrganizaDinDin.Enum;
     using Google.Cloud.Firestore;
+    using OrganizaDinDin.Domain.Enums;
 
     [FirestoreData]
     public class Gasto
@@ -21,7 +21,7 @@
         [FirestoreProperty]
         public required ETipoGasto Tipo { get; set; }
 
-        public DateTime Data
+        public virtual DateTime Data
         {
             get => DataTimestamp.ToDateTime();
             set => DataTimestamp = Timestamp.FromDateTime(value.ToUniversalTime());

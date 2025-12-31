@@ -1,0 +1,277 @@
+.page-title {
+    margin-bottom: 1.5rem;
+}
+
+.page-title h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+.nav-tabs {
+    border-bottom: 2px solid #dee2e6;
+}
+
+.nav-tabs .nav-link {
+    color: #6c757d;
+    border: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: transparent;
+    color: #0d6efd;
+}
+
+.nav-tabs .nav-link.active {
+    color: #0d6efd;
+    background-color: transparent;
+    border-color: transparent;
+    border-bottom-color: #0d6efd;
+    font-weight: 600;
+}
+
+.table-responsive {
+    border-radius: 0.375rem;
+    overflow-x: auto;
+    width: 100%;
+}
+
+.table {
+    margin-bottom: 0;
+    width: 100%;
+    min-width: 100%;
+}
+
+.table thead {
+    background-color: #f8f9fa;
+}
+
+.table thead th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    color: #6c757d;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.badge-tipo {
+    padding: 0.375rem 0.75rem;
+    font-weight: 500;
+}
+
+.valor-positivo {
+    color: #198754;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.valor-negativo {
+    color: #dc3545;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.table tbody td:last-child {
+    white-space: nowrap;
+}
+
+.modal-header {
+    background: #212529;
+    color: white;
+}
+
+.modal-title {
+    color: #fff;
+    font-weight: 600;
+}
+
+.btn-close-white {
+    filter: brightness(0) invert(1);
+}
+
+#deleteModal .modal-body {
+    padding: 1.5rem;
+}
+
+#deleteModal .modal-body p:first-child {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #212529;
+}
+
+#deleteModal .modal-body .text-muted {
+    margin-top: 0.5rem;
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.invalid-feedback {
+    display: none;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #dc3545;
+}
+
+.is-invalid ~ .invalid-feedback {
+    display: block;
+}
+
+.is-valid {
+    border-color: #198754 !important;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.input-group.has-validation .form-control:invalid,
+.input-group.has-validation .form-control.is-invalid {
+    border-right: 1px solid #dc3545;
+}
+
+@media (max-width: 768px) {
+    .page-title h1 {
+        font-size: 1.5rem;
+    }
+
+    .page-title #btnNovoGasto {
+        width: 100%;
+    }
+
+    .table {
+        font-size: 0.875rem;
+    }
+
+    tfoot td {
+        padding: 0.5rem 0.25rem;
+    }
+
+    .table thead th {
+        font-size: 0.75rem;
+        padding: 0.5rem 0.25rem;
+        white-space: nowrap;
+    }
+
+    .table tbody td {
+        padding: 0.5rem 0.25rem;
+    }
+
+    .table tbody td:nth-child(2),
+    .table tbody td:nth-child(3),
+    .table tbody td:nth-child(4) {
+        white-space: nowrap;
+    }
+
+    .btn-sm {
+        padding: 0.125rem 0.25rem;
+        font-size: 0.75rem;
+    }
+
+    .badge-tipo {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        display: inline-block;
+        max-width: 100px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 576px) {
+    .page-title h1 {
+        font-size: 1.25rem;
+    }
+
+    .table {
+        font-size: 0.8rem;
+    }
+
+    .table thead th {
+        font-size: 0.7rem;
+        padding: 0.4rem 0.2rem;
+    }
+
+    .table tbody td {
+        padding: 0.4rem 0.2rem;
+    }
+
+    tfoot td {
+        padding: 0.4rem 0.2rem !important;
+    }
+
+    .table tbody td:first-child {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .badge-tipo {
+        font-size: 0.65rem;
+        padding: 0.2rem 0.4rem;
+        display: inline-block;
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .valor-positivo,
+    .valor-negativo {
+        font-size: 0.75rem;
+    }
+}
+
+tfoot tr {
+    font-weight: 600;
+    background-color: #e9ecef;
+}
+
+tfoot td {
+    padding: 0.75rem;
+}
+
+tfoot .valor-positivo {
+    color: #198754;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.table tbody tr {
+    animation: fadeIn 0.3s ease;
+}

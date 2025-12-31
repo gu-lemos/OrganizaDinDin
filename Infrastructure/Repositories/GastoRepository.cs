@@ -13,7 +13,7 @@ namespace OrganizaDinDin.Infrastructure.Repositories
         {
             var collection = _firestoreDb.Collection(CollectionName);
             var snapshot = await collection.GetSnapshotAsync();
-            return snapshot.Documents.Select(doc => doc.ConvertTo<Gasto>()).ToList();
+            return [.. snapshot.Documents.Select(doc => doc.ConvertTo<Gasto>()).OrderByDescending(doc => doc.Data)];
         }
 
         public async Task<Gasto?> GetByIdAsync(string id)

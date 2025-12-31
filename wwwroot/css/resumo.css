@@ -1,0 +1,295 @@
+.page-title {
+    margin-bottom: 1.5rem;
+}
+
+.page-title h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #212529;
+}
+
+.summary-cards {
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.summary-card .card-body {
+    padding: 1.5rem;
+}
+
+.summary-card .card-title {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    opacity: 0.9;
+    white-space: nowrap;
+}
+
+.summary-card .card-text {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chart-card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-card .card-header {
+    background-color: #212529;
+    color: white;
+    border-bottom: none;
+    border-radius: 0.5rem 0.5rem 0 0;
+    padding: 1rem 1.25rem;
+}
+
+.chart-card .card-header h5 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.chart-card .card-body {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-card canvas {
+    max-height: 300px;
+    width: 100% !important;
+    height: auto !important;
+}
+
+.detail-card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.detail-card .card-header {
+    background-color: #212529;
+    color: white;
+    border-bottom: none;
+    border-radius: 0.5rem 0.5rem 0 0;
+    padding: 1rem 1.25rem;
+}
+
+.detail-card .card-header h5 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.detail-card .card-body {
+    padding: 0;
+}
+
+.detail-card .table {
+    margin-bottom: 0;
+}
+
+.detail-card .table thead {
+    background-color: #f8f9fa;
+}
+
+.detail-card .table thead th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    color: #6c757d;
+    border-bottom: 2px solid #dee2e6;
+    padding: 1rem;
+}
+
+.detail-card .table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+}
+
+.custom-progress {
+    height: 25px;
+    border-radius: 0.375rem;
+    background-color: #e9ecef;
+}
+
+.custom-progress-bar {
+    border-radius: 0.375rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.percentage-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #198754;
+    min-width: 45px;
+    text-align: right;
+}
+
+.type-badge {
+    padding: 0.375rem 0.75rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+@media (max-width: 991px) {
+    .page-title h1 {
+        font-size: 1.75rem;
+    }
+
+    .summary-card .card-title {
+        font-size: 0.95rem;
+    }
+
+    .summary-card .card-text {
+        font-size: 1.75rem;
+    }
+
+    .chart-card {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-width: 767px) {
+    .page-title h1 {
+        font-size: 1.5rem;
+    }
+
+    .summary-cards .col-md-6 {
+        margin-bottom: 1rem;
+    }
+
+    .summary-cards .col-md-6:last-child {
+        margin-bottom: 0;
+    }
+
+    .summary-card .card-body {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .summary-card .card-title {
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .summary-card .card-text {
+        font-size: 1.4rem;
+        word-break: break-all;
+    }
+
+    .charts-row .col-md-6 {
+        margin-bottom: 1rem;
+    }
+
+    .chart-card .card-header h5 {
+        font-size: 1rem;
+    }
+
+    .chart-card .card-body {
+        padding: 1rem;
+    }
+
+    .detail-card .table {
+        font-size: 0.875rem;
+    }
+
+    .detail-card .table thead th {
+        font-size: 0.75rem;
+        padding: 0.75rem 0.5rem;
+    }
+
+    .detail-card .table tbody td {
+        padding: 0.75rem 0.5rem;
+    }
+
+    .custom-progress {
+        height: 20px;
+        font-size: 0.75rem;
+    }
+
+    .percentage-label {
+        font-size: 0.75rem;
+        min-width: 40px;
+    }
+
+    .type-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+}
+
+@media (max-width: 575px) {
+    .page-title h1 {
+        font-size: 1.25rem;
+    }
+
+    .summary-card .card-body {
+        padding: 0.875rem;
+    }
+
+    .summary-card .card-title {
+        font-size: 0.8rem;
+    }
+
+    .summary-card .card-text {
+        font-size: 1.15rem;
+    }
+
+    .detail-card .table th:nth-child(2),
+    .detail-card .table td:nth-child(2) {
+        display: none;
+    }
+
+    .detail-card .table {
+        font-size: 0.8rem;
+    }
+
+    .percentage-label {
+        font-size: 0.7rem;
+        min-width: 35px;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.summary-card,
+.chart-card,
+.detail-card {
+    animation: fadeInUp 0.3s ease;
+}

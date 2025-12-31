@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using OrganizaDinDin.Application.Interfaces;
 using OrganizaDinDin.Application.DTOs;
+using OrganizaDinDin.Application.Filters;
 
 namespace OrganizaDinDin.Controllers
 {
@@ -23,6 +24,7 @@ namespace OrganizaDinDin.Controllers
         }
 
         [HttpPost]
+        [ValidateModel]
         public async Task<IActionResult> Create([FromBody] GastoDto gastoDto)
         {
             try
@@ -37,6 +39,7 @@ namespace OrganizaDinDin.Controllers
         }
 
         [HttpPost]
+        [ValidateModel]
         public async Task<IActionResult> Update([FromBody] GastoDto gastoDto)
         {
             try
