@@ -163,6 +163,11 @@
         width: 100%;
     }
 
+    #btnLimparFiltros {
+        font-size: 0.75rem;
+        width: 100px;
+    }
+
     .table {
         font-size: 0.875rem;
     }
