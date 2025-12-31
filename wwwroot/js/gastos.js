@@ -30,7 +30,11 @@
             btnLimparFiltros: document.getElementById('btnLimparFiltros'),
             filterForm: document.getElementById('filterForm'),
             filtroDataInicio: document.getElementById('filtroDataInicio'),
-            filtroDataFim: document.getElementById('filtroDataFim')
+            filtroDataFim: document.getElementById('filtroDataFim'),
+            dropdownTipo: document.querySelector('.dropdown-tipo'),
+            dropdownTipoToggle: document.querySelector('.dropdown-tipo-toggle'),
+            dropdownTipoText: document.querySelector('.dropdown-tipo-text'),
+            dropdownTipoCheckboxes: document.querySelectorAll('.dropdown-tipo-item input[type="checkbox"]')
         };
     }
 
@@ -53,6 +57,10 @@
 
         if (formElements.btnLimparFiltros) {
             formElements.btnLimparFiltros.addEventListener('click', limparFiltros);
+        }
+
+        if (formElements.dropdownTipo) {
+            setupDropdownTipo();
         }
     }
 
@@ -256,6 +264,45 @@
 
     function limparFiltros() {
         window.location.href = '/Gastos/Index';
+    }
+
+    function setupDropdownTipo() {
+        formElements.dropdownTipoToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            formElements.dropdownTipo.classList.toggle('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!formElements.dropdownTipo.contains(e.target)) {
+                formElements.dropdownTipo.classList.remove('active');
+            }
+        });
+
+        formElements.dropdownTipoCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateDropdownText);
+        });
+
+        updateDropdownText();
+    }
+
+    function updateDropdownText() {
+        const selectedCheckboxes = Array.from(formElements.dropdownTipoCheckboxes).filter(cb => cb.checked);
+        const selectedCount = selectedCheckboxes.length;
+
+        if (selectedCount === 0) {
+            formElements.dropdownTipoText.textContent = 'Selecione os tipos...';
+        } else if (selectedCount === 1) {
+            formElements.dropdownTipoText.textContent = selectedCheckboxes[0].nextElementSibling.textContent;
+        } else {
+            const selectedNames = selectedCheckboxes.map(cb => cb.nextElementSibling.textContent);
+            const lastItem = selectedNames.pop();
+            formElements.dropdownTipoText.textContent = selectedNames.join(', ') + ' e ' + lastItem;
+        }
+    }
+
+    function showToast(message, type) {
+        console.log(`${type}: ${message}`);
+        alert(message);
     }
 
 })();

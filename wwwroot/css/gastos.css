@@ -305,3 +305,85 @@ tfoot .valor-positivo {
 .table tbody tr {
     animation: fadeIn 0.3s ease;
 }
+
+.dropdown-tipo {
+    position: relative;
+}
+
+.dropdown-tipo-toggle {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: #fff;
+    padding-right: 2.5rem;
+}
+
+.dropdown-tipo-toggle:hover {
+    background-color: #fff;
+}
+
+.dropdown-tipo-toggle i {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.2s ease;
+}
+
+.dropdown-tipo.active .dropdown-tipo-toggle i {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.dropdown-tipo-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+}
+
+.dropdown-tipo-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    margin-top: 0.25rem;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.dropdown-tipo.active .dropdown-tipo-menu {
+    display: block;
+}
+
+.dropdown-tipo-item {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    margin: 0;
+}
+
+.dropdown-tipo-item:hover {
+    background-color: #f8f9fa;
+}
+
+.dropdown-tipo-item input[type="checkbox"] {
+    margin-right: 0.5rem;
+    cursor: pointer;
+    width: 1.125rem;
+    height: 1.125rem;
+    accent-color: #212529;
+}
+
+.dropdown-tipo-item span {
+    flex: 1;
+    user-select: none;
+}

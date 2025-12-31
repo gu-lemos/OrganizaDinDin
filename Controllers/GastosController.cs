@@ -11,12 +11,12 @@ namespace OrganizaDinDin.Controllers
     {
         private readonly IGastoService _gastoService = gastoService;
 
-        public async Task<IActionResult> Index(string? descricao, int? tipo, DateTime? dataInicio, DateTime? dataFim)
+        public async Task<IActionResult> Index(string? descricao, List<int>? tipos, DateTime? dataInicio, DateTime? dataFim)
         {
-            var gastos = await _gastoService.GetGastosFilteredAsync(descricao, tipo, dataInicio, dataFim);
+            var gastos = await _gastoService.GetGastosFilteredAsync(descricao, tipos, dataInicio, dataFim);
 
             ViewBag.Descricao = descricao;
-            ViewBag.Tipo = tipo;
+            ViewBag.Tipos = tipos ?? new List<int>();
             ViewBag.DataInicio = dataInicio?.ToString("yyyy-MM-dd");
             ViewBag.DataFim = dataFim?.ToString("yyyy-MM-dd");
 

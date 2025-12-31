@@ -16,13 +16,13 @@ namespace OrganizaDinDin.Infrastructure.Repositories
             return [.. snapshot.Documents.Select(doc => doc.ConvertTo<Gasto>()).OrderByDescending(doc => doc.Data)];
         }
 
-        public async Task<List<Gasto>> GetFilteredAsync(string? descricao, int? tipo, DateTime? dataInicio, DateTime? dataFim)
+        public async Task<List<Gasto>> GetFilteredAsync(string? descricao, List<int>? tipos, DateTime? dataInicio, DateTime? dataFim)
         {
             Query query = _firestoreDb.Collection(CollectionName);
 
-            if (tipo.HasValue)
+            if (tipos != null && tipos.Count != 0)
             {
-                query = query.WhereEqualTo("Tipo", tipo.Value);
+                query = query.WhereIn("Tipo", tipos);
             }
 
             if (dataInicio.HasValue)

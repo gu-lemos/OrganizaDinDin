@@ -19,7 +19,7 @@ namespace OrganizaDinDin.Domain.Enums
         [Description("Reforma")]
         Reforma,
 
-        [Description("Registro, documentação e taxas")]
+        [Description("Documentação")]
         Documentacao,
 
         [Description("Móveis")]

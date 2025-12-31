@@ -28,13 +28,22 @@
                 </div>
                 <div class="col-md-3">
                     <label for="filtroTipo" class="form-label small">Tipo</label>
-                    <select class="form-select" id="filtroTipo" name="tipo">
-                        <option value="">Todos os tipos</option>
-                        @foreach (ETipoGasto tipo in Enum.GetValues(typeof(ETipoGasto)))
-                        {
-                            <option value="@((int)tipo)" selected="@(ViewBag.Tipo == (int)tipo)">@tipo.GetDescription()</option>
-                        }
-                    </select>
+                    <div class="dropdown-tipo">
+                        <button type="button" class="form-control text-start dropdown-tipo-toggle" id="filtroTipo">
+                            <span class="dropdown-tipo-text">Selecione os tipos...</span>
+                            <i class="bi bi-chevron-down float-end"></i>
+                        </button>
+                        <div class="dropdown-tipo-menu">
+                            @foreach (ETipoGasto tipo in Enum.GetValues(typeof(ETipoGasto)))
+                            {
+                                var isSelected = ViewBag.Tipos != null && ((List<int>)ViewBag.Tipos).Contains((int)tipo);
+                                <label class="dropdown-tipo-item">
+                                    <input type="checkbox" name="tipos" value="@((int)tipo)" @(isSelected ? "checked" : "") />
+                                    <span>@tipo.GetDescription()</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
                 </div>
                 <div class="col-md-2">
                     <label for="filtroDataInicio" class="form-label small">Data Início</label>
