@@ -34,7 +34,11 @@
             dropdownTipo: document.querySelector('.dropdown-tipo'),
             dropdownTipoToggle: document.querySelector('.dropdown-tipo-toggle'),
             dropdownTipoText: document.querySelector('.dropdown-tipo-text'),
-            dropdownTipoCheckboxes: document.querySelectorAll('.dropdown-tipo-item input[type="checkbox"]')
+            dropdownTipoCheckboxes: document.querySelectorAll('.dropdown-tipo-item input[type="checkbox"]'),
+            filterCard: document.getElementById('filterCard'),
+            filterCardHeader: document.getElementById('filterCardHeader'),
+            filterCardBody: document.getElementById('filterCardBody'),
+            filterToggleIcon: document.getElementById('filterToggleIcon')
         };
     }
 
@@ -61,6 +65,10 @@
 
         if (formElements.dropdownTipo) {
             setupDropdownTipo();
+        }
+
+        if (formElements.filterCardHeader) {
+            formElements.filterCardHeader.addEventListener('click', toggleFilterCard);
         }
     }
 
@@ -300,9 +308,10 @@
         }
     }
 
-    function showToast(message, type) {
-        console.log(`${type}: ${message}`);
-        alert(message);
+    function toggleFilterCard() {
+        formElements.filterCard.classList.toggle('collapsed');
+        formElements.filterCardHeader.classList.toggle('collapsed');
+        formElements.filterCardBody.classList.toggle('collapsed');
     }
 
 })();

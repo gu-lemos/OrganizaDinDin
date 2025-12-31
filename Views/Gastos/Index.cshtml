@@ -10,16 +10,15 @@
 
 <div class="page-title d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
     <h1 class="mb-0"><i class="bi bi-wallet"></i> Listagem de Gastos</h1>
-    <button class="btn btn-dark" id="btnNovoGasto" data-bs-toggle="modal" data-bs-target="#gastoModal">
-        <i class="bi bi-plus-circle me-2"></i>Novo Gasto
-    </button>
 </div>
 
-<div class="card mb-4 filter-card">
-    <div class="card-header">
+<div class="card mb-4 filter-card" id="filterCard">
+    <div class="card-header filter-card-header" id="filterCardHeader">
         <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filtros</h5>
+        <i class="bi bi-chevron-up" id="filterToggleIcon"></i>
     </div>
-    <div class="card-body">
+
+    <div class="card-body" id="filterCardBody">
         <form method="get" asp-action="Index" id="filterForm" novalidate>
             <div class="row g-3">
                 <div class="col-md-4">
@@ -114,6 +113,12 @@
     </table>
 </div>
 
+<div class="d-flex justify-content-end mt-2">
+    <button class="btn btn-dark" id="btnNovoGasto" data-bs-toggle="modal" data-bs-target="#gastoModal">
+        <i class="bi bi-plus-circle me-2"></i>Novo Gasto
+    </button>
+</div>
+
 <!-- Modal de Confirmação de Exclusão -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -136,7 +141,7 @@
 
 <!-- Modal para Criar/Editar Gasto -->
 <div class="modal fade" id="gastoModal" tabindex="-1" aria-labelledby="gastoModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header ">
                 <h5 class="modal-title" id="gastoModalLabel">Novo Gasto</h5>

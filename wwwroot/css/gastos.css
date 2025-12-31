@@ -159,7 +159,7 @@
         font-size: 1.5rem;
     }
 
-    .page-title #btnNovoGasto {
+    #btnNovoGasto {
         width: 100%;
     }
 
@@ -262,6 +262,13 @@
     border: none;
     border-radius: 0.5rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease;
+    background-color: transparent;
+}
+
+.filter-card.collapsed {
+    box-shadow: none;
+    background-color: transparent;
 }
 
 .filter-card .card-header {
@@ -270,12 +277,49 @@
     border-bottom: none;
     border-radius: 0.5rem 0.5rem 0 0;
     padding: 0.75rem 1rem;
+    transition: border-radius 0.3s ease;
+}
+
+.filter-card.collapsed .card-header {
+    border-radius: 0.5rem;
 }
 
 .filter-card .card-header h5 {
     margin: 0;
     font-size: 1rem;
     font-weight: 600;
+}
+
+.filter-card-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+}
+
+.filter-card-header i#filterToggleIcon {
+    transition: transform 0.3s ease;
+}
+
+.filter-card-header.collapsed i#filterToggleIcon {
+    transform: rotate(180deg);
+}
+
+.card-body {
+    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
+    max-height: 1000px;
+    opacity: 1;
+    overflow: hidden;
+}
+
+.card-body.collapsed {
+    max-height: 0 !important;
+    opacity: 0;
+    padding: 0 !important;
+    margin: 0;
+    border: none;
+    display: none;
 }
 
 .filter-card .card-body {
