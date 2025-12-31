@@ -129,6 +129,11 @@
     vertical-align: middle;
 }
 
+.detail-card .table tbody td:nth-child(2),
+.detail-card .table tbody td:nth-child(3) {
+    white-space: nowrap;
+}
+
 .custom-progress {
     height: 25px;
     border-radius: 0.375rem;
