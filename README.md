@@ -121,7 +121,7 @@ dotnet restore
 dotnet run
 ```
 
-O aplicativo estará disponível em `https://localhost:5001` ou `http://localhost:5000`.
+O aplicativo estará disponível em `https://localhost:7262`.
 
 ## Funcionalidades Técnicas
 
@@ -153,4 +153,4 @@ Análise visual dos gastos por categoria com gráficos interativos.
 
 ## Padrões de Commit
 
-Este projeto segue o padrão [Conventional Commits](https://www.conventionalcommits.org/):
+Este projeto segue o padrão [Conventional Commits](https://www.conventionalcommits.org/)
