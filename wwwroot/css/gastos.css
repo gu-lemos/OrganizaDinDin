@@ -164,8 +164,12 @@
     }
 
     #btnLimparFiltros {
+        align-items: center;
+        justify-content: center;
+        display: flex;
         font-size: 0.75rem;
         width: 100px;
+        height: 30px;
     }
 
     .table {
