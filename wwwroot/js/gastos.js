@@ -26,7 +26,11 @@
             modal: document.getElementById('gastoModal'),
             modalTitle: document.getElementById('gastoModalLabel'),
             deleteModal: document.getElementById('deleteModal'),
-            btnConfirmarDelete: document.getElementById('btnConfirmarDelete')
+            btnConfirmarDelete: document.getElementById('btnConfirmarDelete'),
+            btnLimparFiltros: document.getElementById('btnLimparFiltros'),
+            filterForm: document.getElementById('filterForm'),
+            filtroDataInicio: document.getElementById('filtroDataInicio'),
+            filtroDataFim: document.getElementById('filtroDataFim')
         };
     }
 
@@ -46,6 +50,10 @@
         formElements.valor.addEventListener('blur', () => validateField('valor'));
 
         formElements.modal.addEventListener('show.bs.modal', clearValidation);
+
+        if (formElements.btnLimparFiltros) {
+            formElements.btnLimparFiltros.addEventListener('click', limparFiltros);
+        }
     }
 
     function handleTableClick(e) {
@@ -244,6 +252,10 @@
 
     function formatarValor(centavos) {
         return (centavos / 100).toFixed(2).replace('.', ',');
+    }
+
+    function limparFiltros() {
+        window.location.href = '/Gastos/Index';
     }
 
 })();

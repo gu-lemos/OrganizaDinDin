@@ -14,6 +14,11 @@ namespace OrganizaDinDin.Application.Services
             return await _gastoRepository.GetAllAsync();
         }
 
+        public async Task<List<Gasto>> GetGastosFilteredAsync(string? descricao, int? tipo, DateTime? dataInicio, DateTime? dataFim)
+        {
+            return await _gastoRepository.GetFilteredAsync(descricao, tipo, dataInicio, dataFim);
+        }
+
         public async Task<Gasto?> GetGastoByIdAsync(string id)
         {
             return await _gastoRepository.GetByIdAsync(id);

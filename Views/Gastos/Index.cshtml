@@ -1,7 +1,7 @@
 @using OrganizaDinDin.Domain.Enums
 @model List<Gasto>
 @{
-    ViewData["Title"] = "Gerenciamento de Gastos";
+    ViewData["Title"] = "Listagem de Gastos";
 }
 
 @section Styles {
@@ -9,10 +9,56 @@
 }
 
 <div class="page-title d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
-    <h1 class="mb-0"><i class="bi bi-wallet"></i> Gerenciamento de Gastos</h1>
+    <h1 class="mb-0"><i class="bi bi-wallet"></i> Listagem de Gastos</h1>
     <button class="btn btn-dark" id="btnNovoGasto" data-bs-toggle="modal" data-bs-target="#gastoModal">
         <i class="bi bi-plus-circle me-2"></i>Novo Gasto
     </button>
+</div>
+
+<div class="card mb-4 filter-card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filtros</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" asp-action="Index" id="filterForm" novalidate>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label for="filtroDescricao" class="form-label small">Descrição</label>
+                    <input type="text" class="form-control" id="filtroDescricao" name="descricao" value="@ViewBag.Descricao" placeholder="Buscar por descrição..." />
+                </div>
+                <div class="col-md-3">
+                    <label for="filtroTipo" class="form-label small">Tipo</label>
+                    <select class="form-select" id="filtroTipo" name="tipo">
+                        <option value="">Todos os tipos</option>
+                        @foreach (ETipoGasto tipo in Enum.GetValues(typeof(ETipoGasto)))
+                        {
+                            <option value="@((int)tipo)" selected="@(ViewBag.Tipo == (int)tipo)">@tipo.GetDescription()</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="filtroDataInicio" class="form-label small">Data Início</label>
+                    <input type="date" class="form-control" id="filtroDataInicio" name="dataInicio" value="@ViewBag.DataInicio" />
+                </div>
+                <div class="col-md-2">
+                    <label for="filtroDataFim" class="form-label small">Data Fim</label>
+                    <input type="date" class="form-control" id="filtroDataFim" name="dataFim" value="@ViewBag.DataFim" />
+                </div>
+                <div class="col-md-1 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-dark w-100" title="Aplicar filtros">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnLimparFiltros">
+                        <i class="bi bi-x-circle me-1"></i>Limpar filtros
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 
 <div class="table-responsive">
@@ -36,10 +82,10 @@
                     <td class="valor-positivo">R$ @((gasto.Valor / 100.0).ToString("N2"))</td>
                     <td class="text-center">
                         <button class="btn btn-sm btn-warning btn-editar" data-gasto-id="@gasto.Id" title="Editar">
-                            ✏️
+                            <i class="bi bi-pencil-fill"></i>
                         </button>
                         <button class="btn btn-sm btn-danger btn-deletar" data-gasto-id="@gasto.Id" title="Excluir">
-                            🗑️
+                            <i class="bi bi-trash-fill"></i>
                         </button>
                     </td>
                 </tr>

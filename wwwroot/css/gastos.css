@@ -248,6 +248,36 @@
     }
 }
 
+.filter-card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.filter-card .card-header {
+    background-color: #212529;
+    color: white;
+    border-bottom: none;
+    border-radius: 0.5rem 0.5rem 0 0;
+    padding: 0.75rem 1rem;
+}
+
+.filter-card .card-header h5 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.filter-card .card-body {
+    padding: 1.25rem;
+}
+
+.filter-card .form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
 tfoot tr {
     font-weight: 600;
     background-color: #e9ecef;
