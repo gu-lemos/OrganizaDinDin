@@ -21,6 +21,6 @@ namespace OrganizaDinDin.Domain.Entities
         public bool Ativo { get; set; } = true;
 
         [FirestoreProperty]
-        public string? Role { get; set; } = "User";
+        public string? Role { get; set; }
     }
 }

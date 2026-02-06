@@ -1,4 +1,10 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-// for details on configuring this project to bundle and minify static web assets.
+window.btnLoading = function(button, text) {
+    button._originalHTML = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + (text || 'Carregando...');
+};
 
-// Write your JavaScript code.
+window.btnReset = function(button) {
+    button.disabled = false;
+    button.innerHTML = button._originalHTML;
+};

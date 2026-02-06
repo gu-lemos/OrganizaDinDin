@@ -1,0 +1,178 @@
+@using OrganizaDinDin.Domain.Enums
+@model List<CofrinhoTransacao>
+@{
+    ViewData["Title"] = "Cofrinho";
+    var saldo = (long)ViewBag.Saldo;
+    var usuarios = (Dictionary<string, string>)ViewBag.Usuarios;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/cofrinho.css" asp-append-version="true" />
+}
+
+<div class="page-title d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+    <h1>Cofrinho</h1>
+</div>
+
+<!-- Card de Saldo -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card text-white bg-success saldo-card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-wallet2 me-2"></i>Saldo Atual</h5>
+                <h2 class="card-text" id="saldoAtual">R$ @((saldo / 100.0).ToString("N2"))</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Botões de Ação -->
+<div class="d-flex gap-2 mb-4">
+    <button class="btn btn-dark" id="btnDepositar" data-bs-toggle="modal" data-bs-target="#depositoModal">
+        <i class="bi bi-plus-circle me-2"></i>Depositar
+    </button>
+    <button class="btn btn-outline-danger" id="btnResgatar" data-bs-toggle="modal" data-bs-target="#resgateModal">
+        <i class="bi bi-dash-circle me-2"></i>Resgatar
+    </button>
+</div>
+
+<!-- Tabela de Histórico -->
+<div class="card historico-card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Histórico</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>Tipo</th>
+                        <th>Quem</th>
+                        <th>Data</th>
+                        <th>Valor</th>
+                        <th>Motivo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var transacao in Model)
+                    {
+                        var isDeposito = transacao.Tipo == ETipoTransacaoCofrinho.Deposito;
+                        var nomeUsuario = usuarios.ContainsKey(transacao.UsuarioId) ? usuarios[transacao.UsuarioId] : "Desconhecido";
+                        <tr>
+                            <td>
+                                <span class="badge @(isDeposito ? "bg-success" : "bg-danger")">
+                                    @transacao.Tipo.GetDescription()
+                                </span>
+                            </td>
+                            <td>@nomeUsuario</td>
+                            <td>@transacao.Data.ToString("dd/MM/yyyy")</td>
+                            <td class="@(isDeposito ? "valor-positivo" : "valor-negativo")">
+                                @(isDeposito ? "+" : "-") R$ @((transacao.Valor / 100.0).ToString("N2"))
+                            </td>
+                            <td>@(transacao.Motivo ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Depósito -->
+<div class="modal fade" id="depositoModal" tabindex="-1" aria-labelledby="depositoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="depositoModalLabel">Novo Depósito</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="depositoForm" novalidate>
+                    <div class="mb-3">
+                        <label for="depositoValor" class="form-label">Valor</label>
+                        <div class="input-group has-validation">
+                            <span class="input-group-text">R$</span>
+                            <input type="text" class="form-control" id="depositoValor" placeholder="0,00">
+                            <div class="invalid-feedback">O valor deve ser maior que zero</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="depositoData" class="form-label">Data</label>
+                        <input type="date" class="form-control" id="depositoData">
+                        <div class="invalid-feedback">A data é obrigatória</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="depositoUsuario" class="form-label">Quem depositou</label>
+                        <select class="form-select" id="depositoUsuario">
+                            <option value="">Selecione um usuário</option>
+                            @foreach (var usuario in usuarios)
+                            {
+                                <option value="@usuario.Key">@usuario.Value</option>
+                            }
+                        </select>
+                        <div class="invalid-feedback">O usuário é obrigatório</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-dark" id="btnConfirmarDeposito">Depositar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Resgate -->
+<div class="modal fade" id="resgateModal" tabindex="-1" aria-labelledby="resgateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resgateModalLabel">Novo Resgate</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="resgateForm" novalidate>
+                    <div class="mb-3">
+                        <label for="resgateValor" class="form-label">Valor</label>
+                        <div class="input-group has-validation">
+                            <span class="input-group-text">R$</span>
+                            <input type="text" class="form-control" id="resgateValor" placeholder="0,00">
+                            <div class="invalid-feedback">O valor deve ser maior que zero</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="resgateData" class="form-label">Data</label>
+                        <input type="date" class="form-control" id="resgateData">
+                        <div class="invalid-feedback">A data é obrigatória</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="resgateUsuario" class="form-label">Quem resgatou</label>
+                        <select class="form-select" id="resgateUsuario">
+                            <option value="">Selecione um usuário</option>
+                            @foreach (var usuario in usuarios)
+                            {
+                                <option value="@usuario.Key">@usuario.Value</option>
+                            }
+                        </select>
+                        <div class="invalid-feedback">O usuário é obrigatório</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="resgateMotivo" class="form-label">Motivo <small class="text-muted">(opcional)</small></label>
+                        <input type="text" class="form-control" id="resgateMotivo" maxlength="200" placeholder="Ex: Compra de material">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-dark" id="btnConfirmarResgate">Resgatar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.cofrinhoSaldo = @saldo;
+    </script>
+    <script src="~/js/cofrinho.js" asp-append-version="true"></script>
+}

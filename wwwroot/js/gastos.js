@@ -119,6 +119,8 @@
     async function confirmarDelete() {
         if (!gastoIdToDelete) return;
 
+        btnLoading(formElements.btnConfirmarDelete, 'Deletando...');
+
         const modal = bootstrap.Modal.getInstance(formElements.deleteModal);
         modal.hide();
 
@@ -136,9 +138,11 @@
                 setTimeout(() => location.reload(), 1000);
             } else {
                 showToast(data.message, 'error');
+                btnReset(formElements.btnConfirmarDelete);
             }
         } catch (error) {
             showToast('Erro ao deletar gasto: ' + error, 'error');
+            btnReset(formElements.btnConfirmarDelete);
         } finally {
             gastoIdToDelete = null;
         }
@@ -149,6 +153,8 @@
             showToast('Por favor, corrija os erros no formulário', 'error');
             return;
         }
+
+        btnLoading(formElements.btnSalvar, 'Salvando...');
 
         const id = formElements.gastoId.value;
         const gasto = {
@@ -175,9 +181,11 @@
                 setTimeout(() => location.reload(), 1000);
             } else {
                 showToast(result.message, 'error');
+                btnReset(formElements.btnSalvar);
             }
         } catch (error) {
             showToast('Erro ao salvar gasto: ' + error, 'error');
+            btnReset(formElements.btnSalvar);
         }
     }
 

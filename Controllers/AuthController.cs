@@ -36,7 +36,7 @@ namespace OrganizaDinDin.Controllers
                 new(ClaimTypes.NameIdentifier, usuario.Id!),
                 new(ClaimTypes.Name, usuario.Nome),
                 new(ClaimTypes.Email, usuario.Email),
-                new(ClaimTypes.Role, usuario.Role)
+                new(ClaimTypes.Role, usuario.Role ?? string.Empty)
             };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

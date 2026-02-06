@@ -63,7 +63,12 @@
 
         if (!emailValid || !senhaValid) {
             e.preventDefault();
+            return;
         }
+
+        var btn = formElements.form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Entrando...';
     }
 
 })();

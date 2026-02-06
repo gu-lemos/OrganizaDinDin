@@ -9,16 +9,16 @@
 }
 
 <div class="page-title d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
-    <h1 class="mb-0"><i class="bi bi-wallet"></i> Listagem de Gastos</h1>
+    <h1>Listagem de Gastos</h1>
 </div>
 
-<div class="card mb-4 filter-card" id="filterCard">
-    <div class="card-header filter-card-header" id="filterCardHeader">
+<div class="card mb-4 filter-card collapsed" id="filterCard">
+    <div class="card-header filter-card-header collapsed" id="filterCardHeader">
         <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filtros</h5>
         <i class="bi bi-chevron-up" id="filterToggleIcon"></i>
     </div>
 
-    <div class="card-body" id="filterCardBody">
+    <div class="card-body collapsed" id="filterCardBody">
         <form method="get" asp-action="Index" id="filterForm" novalidate>
             <div class="row g-3">
                 <div class="col-md-4">

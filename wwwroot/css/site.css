@@ -173,6 +173,15 @@ body.sidebar-open {
   height: 32px;
 }
 
+.submenu-chevron {
+  transition: transform 0.3s ease;
+  font-size: 0.75rem;
+}
+
+a[aria-expanded="false"] .submenu-chevron {
+  transform: rotate(180deg);
+}
+
 .toast-container {
   z-index: 9999;
 }

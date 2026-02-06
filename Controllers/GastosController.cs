@@ -6,7 +6,7 @@ using OrganizaDinDin.Application.Filters;
 
 namespace OrganizaDinDin.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Policy = "UserAccess")]
     public class GastosController(IGastoService gastoService) : Controller
     {
         private readonly IGastoService _gastoService = gastoService;

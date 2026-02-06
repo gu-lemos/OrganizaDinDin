@@ -48,5 +48,37 @@ namespace OrganizaDinDin.Application.Services
         {
             return BCrypt.Net.BCrypt.Verify(senha, senhaHash);
         }
+
+        public async Task<List<Usuario>> GetAllUsuariosAsync()
+        {
+            return await _usuarioRepository.GetAllAsync();
+        }
+
+        public async Task UpdateUsuarioRoleAsync(string id, string role)
+        {
+            var usuario = await _usuarioRepository.GetByIdAsync(id)
+                ?? throw new InvalidOperationException("Usuário não encontrado");
+
+            usuario.Role = role;
+            await _usuarioRepository.UpdateAsync(usuario);
+        }
+
+        public async Task ToggleUsuarioAtivoAsync(string id)
+        {
+            var usuario = await _usuarioRepository.GetByIdAsync(id)
+                ?? throw new InvalidOperationException("Usuário não encontrado");
+
+            usuario.Ativo = !usuario.Ativo;
+            await _usuarioRepository.UpdateAsync(usuario);
+        }
+
+        public async Task ResetSenhaAsync(string id, string novaSenha)
+        {
+            var usuario = await _usuarioRepository.GetByIdAsync(id)
+                ?? throw new InvalidOperationException("Usuário não encontrado");
+
+            usuario.SenhaHash = HashPassword(novaSenha);
+            await _usuarioRepository.UpdateAsync(usuario);
+        }
     }
 }

@@ -9,6 +9,24 @@ namespace OrganizaDinDin.Infrastructure.Repositories
         private readonly FirestoreDb _firestoreDb = firestoreDb;
         private const string CollectionName = "usuarios";
 
+        public async Task<List<Usuario>> GetAllAsync()
+        {
+            var collection = _firestoreDb.Collection(CollectionName);
+            var snapshot = await collection.GetSnapshotAsync();
+            return [.. snapshot.Documents.Select(doc => doc.ConvertTo<Usuario>())];
+        }
+
+        public async Task<Usuario?> GetByIdAsync(string id)
+        {
+            var docRef = _firestoreDb.Collection(CollectionName).Document(id);
+            var snapshot = await docRef.GetSnapshotAsync();
+
+            if (!snapshot.Exists)
+                return null;
+
+            return snapshot.ConvertTo<Usuario>();
+        }
+
         public async Task<Usuario?> GetByEmailAsync(string email)
         {
             var collection = _firestoreDb.Collection(CollectionName);
@@ -26,6 +44,13 @@ namespace OrganizaDinDin.Infrastructure.Repositories
             var collection = _firestoreDb.Collection(CollectionName);
             var docRef = await collection.AddAsync(usuario);
             usuario.Id = docRef.Id;
+            return usuario;
+        }
+
+        public async Task<Usuario> UpdateAsync(Usuario usuario)
+        {
+            var docRef = _firestoreDb.Collection(CollectionName).Document(usuario.Id);
+            await docRef.SetAsync(usuario, SetOptions.Overwrite);
             return usuario;
         }
     }

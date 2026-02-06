@@ -1,0 +1,118 @@
+@model List<OrganizaDinDin.Domain.Entities.Usuario>
+@{
+    ViewData["Title"] = "Usuários";
+    var currentUserId = (string)ViewBag.CurrentUserId;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/usuarios.css" asp-append-version="true" />
+}
+
+<div class="page-title d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
+    <h1>Gerenciamento de Usuários</h1>
+</div>
+
+<div class="card usuarios-card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-people me-2"></i>Usuários</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var usuario in Model)
+                    {
+                        var isSelf = usuario.Id == currentUserId;
+                        <tr data-id="@usuario.Id">
+                            <td>@usuario.Nome</td>
+                            <td>@usuario.Email</td>
+                            <td>
+                                <span class="badge @(usuario.Role == "Admin" ? "bg-primary" : "bg-secondary")">
+                                    @usuario.Role
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge @(usuario.Ativo ? "bg-success" : "bg-danger")">
+                                    @(usuario.Ativo ? "Ativo" : "Inativo")
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1 flex-wrap">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
+                                                data-bs-toggle="dropdown" @(isSelf ? "disabled" : "")>
+                                            Role
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <button class="dropdown-item btn-alterar-role" data-id="@usuario.Id" data-role="Admin"
+                                                        @(usuario.Role == "Admin" ? "disabled" : "")>
+                                                    Admin
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button class="dropdown-item btn-alterar-role" data-id="@usuario.Id" data-role="User"
+                                                        @(usuario.Role == "User" ? "disabled" : "")>
+                                                    User
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                    <button class="btn btn-sm @(usuario.Ativo ? "btn-outline-warning" : "btn-outline-success") btn-toggle-ativo"
+                                            data-id="@usuario.Id" @(isSelf ? "disabled" : "")>
+                                        <i class="bi @(usuario.Ativo ? "bi-person-slash" : "bi-person-check") me-1"></i>
+                                        @(usuario.Ativo ? "Desativar" : "Ativar")
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-dark btn-reset-senha"
+                                            data-id="@usuario.Id" data-nome="@usuario.Nome" @(isSelf ? "disabled" : "")>
+                                        <i class="bi bi-key me-1"></i>Senha
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Reset Senha -->
+<div class="modal fade" id="resetSenhaModal" tabindex="-1" aria-labelledby="resetSenhaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetSenhaModalLabel">Resetar Senha</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Resetar senha de <strong id="resetSenhaNome"></strong></p>
+                <form id="resetSenhaForm" novalidate>
+                    <input type="hidden" id="resetSenhaId" />
+                    <div class="mb-3">
+                        <label for="novaSenha" class="form-label">Nova Senha</label>
+                        <input type="password" class="form-control" id="novaSenha" minlength="6" placeholder="Mínimo 6 caracteres">
+                        <div class="invalid-feedback">A senha deve ter no mínimo 6 caracteres</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-dark" id="btnConfirmarResetSenha">Resetar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/usuarios.js" asp-append-version="true"></script>
+}

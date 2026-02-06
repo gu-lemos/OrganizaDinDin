@@ -21,6 +21,10 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SlidingExpiration = true;
     });
 
+// Configuração de Policy
+builder.Services.AddAuthorizationBuilder().AddPolicy("UserAccess", policy =>
+    policy.RequireRole("User", "Admin"));
+
 // Configuração do Firestore
 builder.Services.AddSingleton(provider =>
 {
@@ -46,18 +50,18 @@ builder.Services.AddSingleton(provider =>
 // Injeção de Dependência - Camada de Infraestrutura
 builder.Services.AddScoped<IGastoRepository, GastoRepository>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<ICofrinhoRepository, CofrinhoRepository>();
 
 // Injeção de Dependência - Camada de Aplicação
 builder.Services.AddScoped<IGastoService, GastoService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ICofrinhoService, CofrinhoService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
