@@ -185,3 +185,26 @@ a[aria-expanded="false"] .submenu-chevron {
 .toast-container {
   z-index: 9999;
 }
+
+/* Paginação */
+.pagination .page-link {
+  color: #212529;
+  border-color: #dee2e6;
+}
+
+.pagination .page-link:hover {
+  color: #fff;
+  background-color: #495057;
+  border-color: #495057;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #212529;
+  border-color: #212529;
+  color: #fff;
+}
+
+.pagination .page-item.disabled .page-link {
+  color: #adb5bd;
+  border-color: #dee2e6;
+}

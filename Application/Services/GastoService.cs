@@ -14,9 +14,17 @@ namespace OrganizaDinDin.Application.Services
             return await _gastoRepository.GetAllAsync();
         }
 
-        public async Task<List<Gasto>> GetGastosFilteredAsync(string? descricao, List<int>? tipos, DateTime? dataInicio, DateTime? dataFim)
+        public async Task<PagedResult<Gasto>> GetGastosFilteredAsync(string? descricao, List<int>? tipos, DateTime? dataInicio, DateTime? dataFim, int pagina, int tamanhoPagina)
         {
-            return await _gastoRepository.GetFilteredAsync(descricao, tipos, dataInicio, dataFim);
+            var gastos = await _gastoRepository.GetFilteredAsync(descricao, tipos, dataInicio, dataFim);
+            return new PagedResult<Gasto>
+            {
+                Itens = gastos.Skip((pagina - 1) * tamanhoPagina).Take(tamanhoPagina).ToList(),
+                TotalItens = gastos.Count,
+                Pagina = pagina,
+                TamanhoPagina = tamanhoPagina,
+                ValorTotal = gastos.Sum(g => g.Valor)
+            };
         }
 
         public async Task<Gasto?> GetGastoByIdAsync(string id)

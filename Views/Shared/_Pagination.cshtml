@@ -1,0 +1,63 @@
+@* Recebe via ViewData: PaginationPage (int), PaginationTotalPages (int), PaginationBaseUrl (string), PaginationInfo (string?) *@
+@{
+    var page = (int)ViewData["PaginationPage"]!;
+    var totalPages = (int)ViewData["PaginationTotalPages"]!;
+    var baseUrl = (string)ViewData["PaginationBaseUrl"]!;
+    var info = ViewData["PaginationInfo"] as string;
+
+    if (totalPages <= 1) return;
+
+    int windowStart = Math.Max(1, page - 2);
+    int windowEnd = Math.Min(totalPages, page + 2);
+}
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <small class="text-muted">@info</small>
+
+    <nav aria-label="Paginação">
+        <ul class="pagination pagination-sm mb-0">
+
+            <li class="page-item @(page <= 1 ? "disabled" : "")">
+                <a class="page-link" href="@(baseUrl)pagina=@(page - 1)" aria-label="Anterior">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+
+            @if (windowStart > 1)
+            {
+                <li class="page-item">
+                    <a class="page-link" href="@(baseUrl)pagina=1">1</a>
+                </li>
+                @if (windowStart > 2)
+                {
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                }
+            }
+
+            @for (int i = windowStart; i <= windowEnd; i++)
+            {
+                <li class="page-item @(i == page ? "active" : "")">
+                    <a class="page-link" href="@(baseUrl)pagina=@i">@i</a>
+                </li>
+            }
+
+            @if (windowEnd < totalPages)
+            {
+                @if (windowEnd < totalPages - 1)
+                {
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                }
+                <li class="page-item">
+                    <a class="page-link" href="@(baseUrl)pagina=@totalPages">@totalPages</a>
+                </li>
+            }
+
+            <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                <a class="page-link" href="@(baseUrl)pagina=@(page + 1)" aria-label="Próximo">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+</div>

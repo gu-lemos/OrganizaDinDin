@@ -1,9 +1,33 @@
 @using OrganizaDinDin.Domain.Enums
-@model List<CofrinhoTransacao>
+@using OrganizaDinDin.Application.DTOs
+@model PagedResult<CofrinhoTransacao>
 @{
     ViewData["Title"] = "Cofrinho";
     var saldo = (long)ViewBag.Saldo;
+    var meta = ViewBag.Meta as long?;
     var usuarios = (Dictionary<string, string>)ViewBag.Usuarios;
+    var filtroTipos = (List<int>)ViewBag.Tipos;
+    var filtroUsuarioId = (string?)ViewBag.UsuarioId;
+
+    int porcentagem = 0;
+    if (meta.HasValue && meta.Value > 0)
+    {
+        porcentagem = (int)Math.Min(100, saldo * 100.0 / meta.Value);
+    }
+
+    var baseQuery = Context.Request.Query
+        .Where(q => q.Key != "pagina")
+        .SelectMany(q => q.Value.Select(v => $"{q.Key}={Uri.EscapeDataString(v ?? "")}"))
+        .ToList();
+    var baseUrl = "/Cofrinho/Index" + (baseQuery.Any() ? "?" + string.Join("&", baseQuery) + "&" : "?");
+
+    ViewData["PaginationPage"] = Model.Pagina;
+    ViewData["PaginationTotalPages"] = Model.TotalPaginas;
+    ViewData["PaginationBaseUrl"] = baseUrl;
+
+    var from = (Model.Pagina - 1) * Model.TamanhoPagina + 1;
+    var to = Math.Min(Model.Pagina * Model.TamanhoPagina, Model.TotalItens);
+    ViewData["PaginationInfo"] = Model.TotalItens > 0 ? $"Exibindo {from}–{to} de {Model.TotalItens} registro(s)" : "";
 }
 
 @section Styles {
@@ -12,71 +36,199 @@
 
 <div class="page-title d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
     <h1>Cofrinho</h1>
-</div>
-
-<!-- Card de Saldo -->
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card text-white bg-success saldo-card">
-            <div class="card-body">
-                <h5 class="card-title"><i class="bi bi-wallet2 me-2"></i>Saldo Atual</h5>
-                <h2 class="card-text" id="saldoAtual">R$ @((saldo / 100.0).ToString("N2"))</h2>
-            </div>
-        </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-dark" id="btnDepositar" data-bs-toggle="modal" data-bs-target="#depositoModal">
+            <i class="bi bi-plus-circle me-2"></i>Depositar
+        </button>
+        <button class="btn btn-outline-danger" id="btnResgatar" data-bs-toggle="modal" data-bs-target="#resgateModal">
+            <i class="bi bi-dash-circle me-2"></i>Resgatar
+        </button>
     </div>
 </div>
 
-<!-- Botões de Ação -->
-<div class="d-flex gap-2 mb-4">
-    <button class="btn btn-dark" id="btnDepositar" data-bs-toggle="modal" data-bs-target="#depositoModal">
-        <i class="bi bi-plus-circle me-2"></i>Depositar
-    </button>
-    <button class="btn btn-outline-danger" id="btnResgatar" data-bs-toggle="modal" data-bs-target="#resgateModal">
-        <i class="bi bi-dash-circle me-2"></i>Resgatar
-    </button>
+<!-- Seção de Meta -->
+@if (meta.HasValue)
+{
+    <div class="card meta-card mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0"><i class="bi bi-bullseye me-2"></i>Meta</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small">R$ @((saldo / 100.0).ToString("N2")) / R$ @((meta.Value / 100.0).ToString("N2"))</span>
+                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#metaModal" title="Editar meta">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="progress meta-progress">
+                <div class="progress-bar bg-dark progress-bar-striped @(porcentagem < 100 ? "progress-bar-animated" : "")"
+                     role="progressbar"
+                     style="width: @porcentagem%"
+                     aria-valuenow="@porcentagem"
+                     aria-valuemin="0"
+                     aria-valuemax="100">
+                    @porcentagem%
+                </div>
+            </div>
+            <small class="text-muted mt-2 d-block">
+                @if (porcentagem >= 100)
+                {
+                    <span class="text-success fw-semibold"><i class="bi bi-check-circle me-1"></i>Meta atingida!</span>
+                }
+                else
+                {
+                    <span>Faltam R$ @(((meta.Value - saldo) / 100.0).ToString("N2")) para atingir a meta</span>
+                }
+            </small>
+        </div>
+    </div>
+}
+else
+{
+    <div class="card meta-card-empty mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center py-3">
+            <span class="text-muted small"><i class="bi bi-bullseye me-2"></i>Nenhuma meta definida</span>
+            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#metaModal">
+                <i class="bi bi-plus-circle me-1"></i>Definir Meta
+            </button>
+        </div>
+    </div>
+}
+
+<!-- Filtros -->
+<div class="card mb-4 filter-card collapsed" id="filterCard">
+    <div class="card-header filter-card-header collapsed" id="filterCardHeader">
+        <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filtros</h5>
+        <i class="bi bi-chevron-up" id="filterToggleIcon"></i>
+    </div>
+    <div class="card-body collapsed" id="filterCardBody">
+        <form method="get" asp-action="Index" id="filterForm" novalidate>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small">Tipo</label>
+                    <div class="dropdown-tipo">
+                        <button type="button" class="form-control text-start dropdown-tipo-toggle" id="filtroTipo">
+                            <span class="dropdown-tipo-text">Selecione os tipos...</span>
+                            <i class="bi bi-chevron-down float-end"></i>
+                        </button>
+                        <div class="dropdown-tipo-menu">
+                            @foreach (ETipoTransacaoCofrinho tipo in Enum.GetValues(typeof(ETipoTransacaoCofrinho)))
+                            {
+                                var isSelected = filtroTipos.Contains((int)tipo);
+                                <label class="dropdown-tipo-item">
+                                    <input type="checkbox" name="tipos" value="@((int)tipo)" @(isSelected ? "checked" : "") />
+                                    <span>@tipo.GetDescription()</span>
+                                </label>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="filtroUsuario" class="form-label small">Quem</label>
+                    <select class="form-select" id="filtroUsuario" name="usuarioId">
+                        <option value="">Todos</option>
+                        @foreach (var usuario in usuarios)
+                        {
+                            @if (filtroUsuarioId == usuario.Key)
+                            {
+                                <option value="@usuario.Key" selected>@usuario.Value</option>
+                            }
+                            else
+                            {
+                                <option value="@usuario.Key">@usuario.Value</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="filtroDataInicio" class="form-label small">Data Início</label>
+                    <input type="date" class="form-control" id="filtroDataInicio" name="dataInicio" value="@ViewBag.DataInicio" />
+                </div>
+                <div class="col-md-2">
+                    <label for="filtroDataFim" class="form-label small">Data Fim</label>
+                    <input type="date" class="form-control" id="filtroDataFim" name="dataFim" value="@ViewBag.DataFim" />
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-dark w-100" title="Aplicar filtros">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="button" class="btn btn-outline-secondary" id="btnLimparFiltros">
+                        <i class="bi bi-x-circle me-1"></i>
+                        <span>Limpar filtros</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 
 <!-- Tabela de Histórico -->
-<div class="card historico-card">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Histórico</h5>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover table-striped mb-0">
-                <thead>
-                    <tr>
-                        <th>Tipo</th>
-                        <th>Quem</th>
-                        <th>Data</th>
-                        <th>Valor</th>
-                        <th>Motivo</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var transacao in Model)
-                    {
-                        var isDeposito = transacao.Tipo == ETipoTransacaoCofrinho.Deposito;
-                        var nomeUsuario = usuarios.ContainsKey(transacao.UsuarioId) ? usuarios[transacao.UsuarioId] : "Desconhecido";
-                        <tr>
-                            <td>
-                                <span class="badge @(isDeposito ? "bg-success" : "bg-danger")">
-                                    @transacao.Tipo.GetDescription()
-                                </span>
-                            </td>
-                            <td>@nomeUsuario</td>
-                            <td>@transacao.Data.ToString("dd/MM/yyyy")</td>
-                            <td class="@(isDeposito ? "valor-positivo" : "valor-negativo")">
-                                @(isDeposito ? "+" : "-") R$ @((transacao.Valor / 100.0).ToString("N2"))
-                            </td>
-                            <td>@(transacao.Motivo ?? "—")</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
+<div class="table-responsive">
+    <table class="table table-hover table-striped">
+        <thead>
+            <tr>
+                <th>Tipo</th>
+                <th>Quem</th>
+                <th>Data</th>
+                <th>Valor</th>
+                <th>Motivo</th>
+                <th class="text-center">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var transacao in Model.Itens)
+            {
+                var isDeposito = transacao.Tipo == ETipoTransacaoCofrinho.Deposito;
+                var nomeUsuario = usuarios.ContainsKey(transacao.UsuarioId) ? usuarios[transacao.UsuarioId] : "Desconhecido";
+                <tr>
+                    <td>
+                        <span class="badge bg-dark">@transacao.Tipo.GetDescription()</span>
+                    </td>
+                    <td>@nomeUsuario</td>
+                    <td>@transacao.Data.ToString("dd/MM/yyyy")</td>
+                    <td class="@(isDeposito ? "valor-positivo" : "valor-negativo")">
+                        @(isDeposito ? "+" : "-") R$ @((transacao.Valor / 100.0).ToString("N2"))
+                    </td>
+                    <td>@(transacao.Motivo ?? "—")</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-warning btn-editar"
+                                data-id="@transacao.Id"
+                                data-valor="@transacao.Valor"
+                                data-data="@transacao.Data.ToString("yyyy-MM-dd")"
+                                data-usuario="@transacao.UsuarioId"
+                                data-tipo="@((int)transacao.Tipo)"
+                                data-motivo="@(transacao.Motivo ?? "")"
+                                title="Editar">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger btn-excluir"
+                                data-id="@transacao.Id"
+                                data-descricao="@(isDeposito ? "Depósito" : "Resgate") de R$ @((transacao.Valor / 100.0).ToString("N2")) em @transacao.Data.ToString("dd/MM/yyyy")"
+                                title="Excluir">
+                            <i class="bi bi-trash-fill"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+        @if (Model.TotalItens > 0)
+        {
+            <tfoot>
+                <tr class="table-secondary">
+                    <td colspan="3" class="text-end fw-bold">TOTAL:</td>
+                    <td class="@(Model.ValorTotal >= 0 ? "valor-positivo" : "valor-negativo")">R$ @((Model.ValorTotal / 100.0).ToString("N2"))</td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+        }
+    </table>
 </div>
+
+@await Html.PartialAsync("_Pagination")
 
 <!-- Modal de Depósito -->
 <div class="modal fade" id="depositoModal" tabindex="-1" aria-labelledby="depositoModalLabel" aria-hidden="true">
@@ -170,9 +322,119 @@
     </div>
 </div>
 
+<!-- Modal de Editar -->
+<div class="modal fade" id="editarModal" tabindex="-1" aria-labelledby="editarModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editarModalLabel">Editar Transação</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editarForm" novalidate>
+                    <input type="hidden" id="editarId">
+                    <div class="mb-3">
+                        <label for="editarTipo" class="form-label">Tipo</label>
+                        <select class="form-select" id="editarTipo">
+                            @foreach (ETipoTransacaoCofrinho tipo in Enum.GetValues(typeof(ETipoTransacaoCofrinho)))
+                            {
+                                <option value="@((int)tipo)">@tipo.GetDescription()</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editarValor" class="form-label">Valor</label>
+                        <div class="input-group has-validation">
+                            <span class="input-group-text">R$</span>
+                            <input type="text" class="form-control" id="editarValor" placeholder="0,00">
+                            <div class="invalid-feedback">O valor deve ser maior que zero</div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editarData" class="form-label">Data</label>
+                        <input type="date" class="form-control" id="editarData">
+                        <div class="invalid-feedback">A data é obrigatória</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editarUsuario" class="form-label">Quem realizou</label>
+                        <select class="form-select" id="editarUsuario">
+                            <option value="">Selecione um usuário</option>
+                            @foreach (var usuario in usuarios)
+                            {
+                                <option value="@usuario.Key">@usuario.Value</option>
+                            }
+                        </select>
+                        <div class="invalid-feedback">O usuário é obrigatório</div>
+                    </div>
+                    <div class="mb-3" id="editarMotivoGroup" style="display:none;">
+                        <label for="editarMotivo" class="form-label">Motivo <small class="text-muted">(opcional)</small></label>
+                        <input type="text" class="form-control" id="editarMotivo" maxlength="200">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-dark" id="btnConfirmarEditar">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Exclusão -->
+<div class="modal fade" id="excluirModal" tabindex="-1" aria-labelledby="excluirModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="excluirModalLabel">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">Tem certeza que deseja excluir esta transação?</p>
+                <p class="fw-semibold mt-1 mb-0" id="excluirDescricao"></p>
+                <p class="text-muted small mb-0">Esta ação não pode ser desfeita.</p>
+                <input type="hidden" id="excluirId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarExcluir">Excluir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Meta -->
+<div class="modal fade" id="metaModal" tabindex="-1" aria-labelledby="metaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="metaModalLabel"><i class="bi bi-bullseye me-2"></i>@(meta.HasValue ? "Editar Meta" : "Definir Meta")</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="metaForm" novalidate>
+                    <div class="mb-3">
+                        <label for="metaValor" class="form-label">Valor da Meta</label>
+                        <div class="input-group has-validation">
+                            <span class="input-group-text">R$</span>
+                            <input type="text" class="form-control" id="metaValor" placeholder="0,00"
+                                   value="@(meta.HasValue ? (meta.Value / 100.0).ToString("N2") : "0,00")">
+                            <div class="invalid-feedback">O valor deve ser maior que zero</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-dark" id="btnConfirmarMeta">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         window.cofrinhoSaldo = @saldo;
+        window.cofrinhoMeta = @(meta.HasValue ? meta.Value.ToString() : "null");
     </script>
     <script src="~/js/cofrinho.js" asp-append-version="true"></script>
 }

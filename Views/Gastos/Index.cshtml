@@ -1,7 +1,22 @@
 @using OrganizaDinDin.Domain.Enums
-@model List<Gasto>
+@using OrganizaDinDin.Application.DTOs
+@model PagedResult<Gasto>
 @{
     ViewData["Title"] = "Listagem de Gastos";
+
+    var baseQuery = Context.Request.Query
+        .Where(q => q.Key != "pagina")
+        .SelectMany(q => q.Value.Select(v => $"{q.Key}={Uri.EscapeDataString(v ?? "")}"))
+        .ToList();
+    var baseUrl = "/Gastos/Index" + (baseQuery.Any() ? "?" + string.Join("&", baseQuery) + "&" : "?");
+
+    ViewData["PaginationPage"] = Model.Pagina;
+    ViewData["PaginationTotalPages"] = Model.TotalPaginas;
+    ViewData["PaginationBaseUrl"] = baseUrl;
+
+    var from = (Model.Pagina - 1) * Model.TamanhoPagina + 1;
+    var to = Math.Min(Model.Pagina * Model.TamanhoPagina, Model.TotalItens);
+    ViewData["PaginationInfo"] = Model.TotalItens > 0 ? $"Exibindo {from}–{to} de {Model.TotalItens} registro(s)" : "";
 }
 
 @section Styles {
@@ -10,6 +25,9 @@
 
 <div class="page-title d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
     <h1>Listagem de Gastos</h1>
+    <button class="btn btn-dark" id="btnNovoGasto" data-bs-toggle="modal" data-bs-target="#gastoModal">
+        <i class="bi bi-plus-circle me-2"></i>Novo Gasto
+    </button>
 </div>
 
 <div class="card mb-4 filter-card collapsed" id="filterCard">
@@ -82,7 +100,7 @@
             </tr>
         </thead>
         <tbody id="gastosTableBody">
-            @foreach (var gasto in Model)
+            @foreach (var gasto in Model.Itens)
             {
                 <tr data-id="@gasto.Id">
                     <td>@gasto.Descricao</td>
@@ -100,12 +118,12 @@
                 </tr>
             }
         </tbody>
-        @if (Model.Any())
+        @if (Model.TotalItens > 0)
         {
             <tfoot>
                 <tr class="table-secondary">
                     <td colspan="3" class="text-end fw-bold">TOTAL:</td>
-                    <td class="valor-positivo">R$ @((Model.Sum(g => g.Valor) / 100.0).ToString("N2"))</td>
+                    <td class="valor-positivo">R$ @((Model.ValorTotal / 100.0).ToString("N2"))</td>
                     <td></td>
                 </tr>
             </tfoot>
@@ -113,11 +131,7 @@
     </table>
 </div>
 
-<div class="d-flex justify-content-end mt-2">
-    <button class="btn btn-dark" id="btnNovoGasto" data-bs-toggle="modal" data-bs-target="#gastoModal">
-        <i class="bi bi-plus-circle me-2"></i>Novo Gasto
-    </button>
-</div>
+@await Html.PartialAsync("_Pagination")
 
 <!-- Modal de Confirmação de Exclusão -->
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
@@ -211,7 +225,7 @@
 
 @section Scripts {
     <script>
-        window.gastosData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model));
+        window.gastosData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Itens));
     </script>
     <script src="~/js/gastos.js" asp-append-version="true"></script>
 }

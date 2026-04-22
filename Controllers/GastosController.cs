@@ -11,22 +11,19 @@ namespace OrganizaDinDin.Controllers
     {
         private readonly IGastoService _gastoService = gastoService;
 
-        public async Task<IActionResult> Index(string? descricao, List<int>? tipos, DateTime? dataInicio, DateTime? dataFim)
+        private const int PageSize = 12;
+
+        public async Task<IActionResult> Index(string? descricao, List<int>? tipos, DateTime? dataInicio, DateTime? dataFim, int pagina = 1)
         {
-            var gastos = await _gastoService.GetGastosFilteredAsync(descricao, tipos, dataInicio, dataFim);
+            pagina = Math.Max(1, pagina);
+            var gastosPaginados = await _gastoService.GetGastosFilteredAsync(descricao, tipos, dataInicio, dataFim, pagina, PageSize);
 
             ViewBag.Descricao = descricao;
-            ViewBag.Tipos = tipos ?? new List<int>();
+            ViewBag.Tipos = tipos ?? [];
             ViewBag.DataInicio = dataInicio?.ToString("yyyy-MM-dd");
             ViewBag.DataFim = dataFim?.ToString("yyyy-MM-dd");
 
-            return View(gastos);
-        }
-
-        public async Task<IActionResult> Resumo()
-        {
-            var gastos = await _gastoService.GetAllGastosAsync();
-            return View(gastos);
+            return View(gastosPaginados);
         }
 
         [HttpPost]

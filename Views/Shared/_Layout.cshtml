@@ -40,27 +40,10 @@
                         var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
                     }
                     <li class="nav-item">
-                        <a class="nav-link text-white d-flex align-items-center" data-bs-toggle="collapse" href="#gastosSubmenu" role="button" aria-expanded="true">
+                        <a href="/Gastos/Index" class="nav-link text-white @(currentController == "Gastos" ? "active" : "")">
                             <i class="bi bi-wallet2 me-2"></i>
-                            <span class="sidebar-text flex-grow-1">Gastos</span>
-                            <i class="bi bi-chevron-up sidebar-text submenu-chevron"></i>
+                            <span class="sidebar-text">Gastos</span>
                         </a>
-                        <div class="collapse show" id="gastosSubmenu">
-                            <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small ps-4">
-                                <li>
-                                    <a href="/Gastos/Index" class="nav-link link-light @(currentController == "Gastos" && currentAction == "Index" ? "active" : "")">
-                                        <i class="bi bi-list-ul me-2"></i>
-                                        <span class="sidebar-text">Listagem</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="/Gastos/Resumo" class="nav-link link-light @(currentController == "Gastos" && currentAction == "Resumo" ? "active" : "")">
-                                        <i class="bi bi-pie-chart me-2"></i>
-                                        <span class="sidebar-text">Resumo</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
                     </li>
                     <li class="nav-item">
                         <a href="/Cofrinho/Index" class="nav-link text-white @(currentController == "Cofrinho" ? "active" : "")">
