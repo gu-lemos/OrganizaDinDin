@@ -5,7 +5,6 @@ namespace OrganizaDinDin.Application.Interfaces
 {
     public interface ICofrinhoService
     {
-        Task<List<CofrinhoTransacao>> GetAllTransacoesAsync();
         Task<PagedResult<CofrinhoTransacao>> GetTransacoesFilteredAsync(List<int>? tipos, string? usuarioId, DateTime? dataInicio, DateTime? dataFim, int pagina, int tamanhoPagina);
         Task<long> GetSaldoAsync();
         Task<CofrinhoTransacao> DepositarAsync(CofrinhoDepositoDto dto);

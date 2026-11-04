@@ -1,73 +1,46 @@
-﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using OrganizaDinDin.Application.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 using OrganizaDinDin.Application.DTOs;
 using OrganizaDinDin.Application.Filters;
+using OrganizaDinDin.Application.Interfaces;
+using OrganizaDinDin.Domain.Enums;
 
 namespace OrganizaDinDin.Controllers
 {
     [Authorize(Policy = "UserAccess")]
-    public class GastosController(IGastoService gastoService) : Controller
+    public class GastosController(IGastoService gastoService) : AppController
     {
+        private const int TamanhoPagina = 12;
+
         private readonly IGastoService _gastoService = gastoService;
 
-        private const int PageSize = 12;
+        public Task<IActionResult> Index(string? descricao, List<int>? tipos, DateTime? dataInicio, DateTime? dataFim, string? compromissoId, int pagina = 1)
+            => RenderListagem(this, _gastoService, EAreaGasto.Apartamento, descricao, tipos, dataInicio, dataFim, compromissoId, pagina);
 
-        public async Task<IActionResult> Index(string? descricao, List<int>? tipos, DateTime? dataInicio, DateTime? dataFim, int pagina = 1)
+        internal static async Task<IActionResult> RenderListagem(Controller controller, IGastoService gastoService, EAreaGasto area,
+            string? descricao, List<int>? tipos, DateTime? dataInicio, DateTime? dataFim, string? compromissoId, int pagina)
         {
             pagina = Math.Max(1, pagina);
-            var gastosPaginados = await _gastoService.GetGastosFilteredAsync(descricao, tipos, dataInicio, dataFim, pagina, PageSize);
+            var model = await gastoService.GetPaginaAsync(area, descricao, tipos, dataInicio, dataFim, compromissoId, pagina, TamanhoPagina);
 
-            ViewBag.Descricao = descricao;
-            ViewBag.Tipos = tipos ?? [];
-            ViewBag.DataInicio = dataInicio?.ToString("yyyy-MM-dd");
-            ViewBag.DataFim = dataFim?.ToString("yyyy-MM-dd");
+            controller.ViewBag.Descricao = descricao;
+            controller.ViewBag.Tipos = tipos ?? [];
+            controller.ViewBag.DataInicio = dataInicio?.ToString("yyyy-MM-dd");
+            controller.ViewBag.DataFim = dataFim?.ToString("yyyy-MM-dd");
+            controller.ViewBag.CompromissoId = compromissoId;
 
-            return View(gastosPaginados);
+            return controller.View("~/Views/Gastos/Index.cshtml", model);
         }
 
         [HttpPost]
         [ValidateModel]
-        public async Task<IActionResult> Create([FromBody] GastoDto gastoDto)
-        {
-            try
-            {
-                var gasto = await _gastoService.CreateGastoAsync(gastoDto);
-                return Json(new { success = true, data = gasto });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
+        public Task<IActionResult> Create([FromBody] GastoDto dto) => ExecutarAsync(() => _gastoService.CreateGastoAsync(dto));
 
         [HttpPost]
         [ValidateModel]
-        public async Task<IActionResult> Update([FromBody] GastoDto gastoDto)
-        {
-            try
-            {
-                var gasto = await _gastoService.UpdateGastoAsync(gastoDto);
-                return Json(new { success = true, data = gasto });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
+        public Task<IActionResult> Update([FromBody] GastoDto dto) => ExecutarAsync(() => _gastoService.UpdateGastoAsync(dto));
 
         [HttpPost]
-        public async Task<IActionResult> Delete([FromBody] string id)
-        {
-            try
-            {
-                var success = await _gastoService.DeleteGastoAsync(id);
-                return Json(new { success });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
+        public Task<IActionResult> Delete([FromBody] string id) => ExecutarAsync(() => _gastoService.DeleteGastoAsync(id));
     }
 }

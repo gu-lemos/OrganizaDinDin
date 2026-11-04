@@ -22,5 +22,7 @@ namespace OrganizaDinDin.Application.DTOs
         [Required(ErrorMessage = "O tipo é obrigatório")]
         [EnumDataType(typeof(ETipoGasto), ErrorMessage = "Tipo de gasto inválido")]
         public required ETipoGasto Tipo { get; set; }
+
+        public string? CompromissoId { get; set; }
     }
 }

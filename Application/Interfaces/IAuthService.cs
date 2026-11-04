@@ -6,8 +6,6 @@ namespace OrganizaDinDin.Application.Interfaces
     {
         Task<Usuario?> AuthenticateAsync(string email, string senha);
         Task<Usuario> RegisterAsync(string nome, string email, string senha);
-        string HashPassword(string senha);
-        bool VerifyPassword(string senha, string senhaHash);
         Task<List<Usuario>> GetAllUsuariosAsync();
         Task UpdateUsuarioRoleAsync(string id, string role);
         Task ToggleUsuarioAtivoAsync(string id);

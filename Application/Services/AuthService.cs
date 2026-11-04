@@ -1,6 +1,6 @@
 using OrganizaDinDin.Application.Interfaces;
-using OrganizaDinDin.Domain.Interfaces;
 using OrganizaDinDin.Domain.Entities;
+using OrganizaDinDin.Domain.Interfaces;
 
 namespace OrganizaDinDin.Application.Services
 {
@@ -10,12 +10,9 @@ namespace OrganizaDinDin.Application.Services
 
         public async Task<Usuario?> AuthenticateAsync(string email, string senha)
         {
-            var usuario = await _usuarioRepository.GetByEmailAsync(email);
+            var usuario = await _usuarioRepository.GetByEmailAsync(email.Trim());
 
-            if (usuario == null || !usuario.Ativo)
-                return null;
-
-            if (!VerifyPassword(senha, usuario.SenhaHash))
+            if (usuario == null || !usuario.Ativo || !BCrypt.Net.BCrypt.Verify(senha, usuario.SenhaHash))
                 return null;
 
             return usuario;
@@ -23,61 +20,34 @@ namespace OrganizaDinDin.Application.Services
 
         public async Task<Usuario> RegisterAsync(string nome, string email, string senha)
         {
-            var usuarioExistente = await _usuarioRepository.GetByEmailAsync(email);
+            email = email.Trim();
 
-            if (usuarioExistente != null)
-                throw new InvalidOperationException("Usuário já existe com este email");
+            if (await _usuarioRepository.GetByEmailAsync(email) != null)
+                throw new InvalidOperationException("Já existe um usuário com este email");
 
-            var usuario = new Usuario
+            return await _usuarioRepository.CreateAsync(new Usuario
             {
-                Nome = nome,
+                Nome = nome.Trim(),
                 Email = email,
-                SenhaHash = HashPassword(senha),
+                SenhaHash = BCrypt.Net.BCrypt.HashPassword(senha),
                 Ativo = true
-            };
-
-            return await _usuarioRepository.CreateAsync(usuario);
+            });
         }
 
-        public string HashPassword(string senha)
-        {
-            return BCrypt.Net.BCrypt.HashPassword(senha);
-        }
+        public Task<List<Usuario>> GetAllUsuariosAsync() => _usuarioRepository.GetAllAsync();
 
-        public bool VerifyPassword(string senha, string senhaHash)
-        {
-            return BCrypt.Net.BCrypt.Verify(senha, senhaHash);
-        }
+        public Task UpdateUsuarioRoleAsync(string id, string role) => AtualizarAsync(id, u => u.Role = role);
 
-        public async Task<List<Usuario>> GetAllUsuariosAsync()
-        {
-            return await _usuarioRepository.GetAllAsync();
-        }
+        public Task ToggleUsuarioAtivoAsync(string id) => AtualizarAsync(id, u => u.Ativo = !u.Ativo);
 
-        public async Task UpdateUsuarioRoleAsync(string id, string role)
+        public Task ResetSenhaAsync(string id, string novaSenha) => AtualizarAsync(id, u => u.SenhaHash = BCrypt.Net.BCrypt.HashPassword(novaSenha));
+
+        private async Task AtualizarAsync(string id, Action<Usuario> alteracao)
         {
             var usuario = await _usuarioRepository.GetByIdAsync(id)
                 ?? throw new InvalidOperationException("Usuário não encontrado");
 
-            usuario.Role = role;
-            await _usuarioRepository.UpdateAsync(usuario);
-        }
-
-        public async Task ToggleUsuarioAtivoAsync(string id)
-        {
-            var usuario = await _usuarioRepository.GetByIdAsync(id)
-                ?? throw new InvalidOperationException("Usuário não encontrado");
-
-            usuario.Ativo = !usuario.Ativo;
-            await _usuarioRepository.UpdateAsync(usuario);
-        }
-
-        public async Task ResetSenhaAsync(string id, string novaSenha)
-        {
-            var usuario = await _usuarioRepository.GetByIdAsync(id)
-                ?? throw new InvalidOperationException("Usuário não encontrado");
-
-            usuario.SenhaHash = HashPassword(novaSenha);
+            alteracao(usuario);
             await _usuarioRepository.UpdateAsync(usuario);
         }
     }

@@ -21,6 +21,9 @@
         [FirestoreProperty]
         public required ETipoGasto Tipo { get; set; }
 
+        [FirestoreProperty]
+        public string? CompromissoId { get; set; }
+
         public virtual DateTime Data
         {
             get => DataTimestamp.ToDateTime();

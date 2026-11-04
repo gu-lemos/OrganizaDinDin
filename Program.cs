@@ -1,3 +1,4 @@
+using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Firestore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using OrganizaDinDin.Application.Interfaces;
@@ -7,10 +8,8 @@ using OrganizaDinDin.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Configuração de Autenticação
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
@@ -21,47 +20,42 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.SlidingExpiration = true;
     });
 
-// Configuração de Policy
 builder.Services.AddAuthorizationBuilder().AddPolicy("UserAccess", policy =>
     policy.RequireRole("User", "Admin"));
 
-// Configuração do Firestore
-builder.Services.AddSingleton(provider =>
+builder.Services.AddSingleton(_ =>
 {
-    var credentialsJson = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS_JSON");
-    var projectId = Environment.GetEnvironmentVariable("FIREBASE_PROJECT_ID") ?? "organizadindin-ee3b1";
-
-    if (!string.IsNullOrEmpty(credentialsJson))
+    var firestore = new FirestoreDbBuilder
     {
-        var credentialsPath = Path.Combine(Path.GetTempPath(), "firebase-credentials.json");
-        File.WriteAllText(credentialsPath, credentialsJson);
-        Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialsPath);
-    }
-    else
-    {
-        Environment.SetEnvironmentVariable(
-            "GOOGLE_APPLICATION_CREDENTIALS",
-            "firebase-credentials.json");
-    }
+        ProjectId = Environment.GetEnvironmentVariable("FIREBASE_PROJECT_ID") ?? builder.Configuration["Firebase:ProjectId"]
+    };
 
-    return FirestoreDb.Create(projectId);
+    var credenciaisJson = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS_JSON");
+    var arquivoCredenciais = Path.Combine(builder.Environment.ContentRootPath, "firebase-credentials.json");
+
+    if (!string.IsNullOrEmpty(credenciaisJson))
+        firestore.GoogleCredential = CredentialFactory.FromJson<ServiceAccountCredential>(credenciaisJson).ToGoogleCredential();
+    else if (File.Exists(arquivoCredenciais))
+        firestore.GoogleCredential = CredentialFactory.FromFile<ServiceAccountCredential>(arquivoCredenciais).ToGoogleCredential();
+
+    return firestore.Build();
 });
 
-// Injeção de Dependência - Camada de Infraestrutura
 builder.Services.AddScoped<IGastoRepository, GastoRepository>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 builder.Services.AddScoped<ICofrinhoRepository, CofrinhoRepository>();
+builder.Services.AddScoped<ICompromissoRepository, CompromissoRepository>();
 
-// Injeção de Dependência - Camada de Aplicação
 builder.Services.AddScoped<IGastoService, GastoService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ICofrinhoService, CofrinhoService>();
+builder.Services.AddScoped<ICompromissoService, CompromissoService>();
 
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error");
+    app.UseExceptionHandler("/Erro");
     app.UseHsts();
 }
 

@@ -3,60 +3,76 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0f172a" />
     <title>@ViewData["Title"] - OrganizaDinDin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
+    <link rel="stylesheet" href="~/css/animations.css" asp-append-version="true" />
 </head>
-<body>
+@{
+    var tema = ViewData["Tema"] as string;
+}
+<body class="@(string.IsNullOrEmpty(tema) ? "" : "tema-" + tema)">
     @if (User.Identity?.IsAuthenticated == true)
     {
-        <!-- Header Mobile -->
+        var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+
         <header class="mobile-header d-md-none">
-            <button class="btn btn-dark" type="button" id="btnToggleSidebar">
+            <button class="btn btn-dark" type="button" id="btnToggleSidebar" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false">
                 <i id="toggleIconMobile" class="bi bi-list fs-5"></i>
             </button>
-            <span class="fw-bold">OrganizaDinDin</span>
+            <a href="/Gastos/Index" class="marca">
+                <span class="marca-icone"><i class="bi bi-coin"></i></span>
+                <span>OrganizaDinDin</span>
+            </a>
         </header>
 
         <div class="d-flex layout-wrapper">
-            <!-- Overlay Mobile -->
             <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
-            <!-- Sidebar -->
-            <div id="sidebar" class="d-flex flex-column flex-shrink-0 p-3 text-bg-dark">
-                <!-- Brand -->
-                <a href="/Gastos/Index" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-                    <i class="bi bi-coin fs-4 me-2"></i>
-                    <span class="fs-4 sidebar-text">OrganizaDinDin</span>
+            <nav id="sidebar" class="d-flex flex-column flex-shrink-0 p-3" aria-label="Menu principal">
+                <a href="/Gastos/Index" class="marca d-none d-md-flex px-2 py-1">
+                    <span class="marca-icone"><i class="bi bi-coin"></i></span>
+                    <span class="marca-nome">OrganizaDinDin</span>
                 </a>
-                <hr>
+                <hr class="d-none d-md-block">
 
-                <!-- Menu -->
-                <ul class="nav nav-pills flex-column mb-auto">
-                    @{
-                        var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
-                        var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
-                    }
+                <div class="menu-titulo">Gastos</div>
+                <ul class="nav flex-column">
                     <li class="nav-item">
-                        <a href="/Gastos/Index" class="nav-link text-white @(currentController == "Gastos" ? "active" : "")">
-                            <i class="bi bi-wallet2 me-2"></i>
-                            <span class="sidebar-text">Gastos</span>
+                        <a href="/Gastos/Index" class="nav-link menu-apartamento @(currentController == "Gastos" ? "active" : "")" @(currentController == "Gastos" ? "aria-current=page" : "")>
+                            <span class="menu-icone"><i class="bi bi-building"></i></span>
+                            <span>Apartamento</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="/Cofrinho/Index" class="nav-link text-white @(currentController == "Cofrinho" ? "active" : "")">
-                            <i class="bi bi-piggy-bank me-2"></i>
-                            <span class="sidebar-text">Cofrinho</span>
+                        <a href="/Casamento/Index" class="nav-link menu-casamento @(currentController == "Casamento" ? "active" : "")" @(currentController == "Casamento" ? "aria-current=page" : "")>
+                            <span class="menu-icone"><i class="bi bi-heart"></i></span>
+                            <span>Casamento</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="menu-titulo mt-3">Economias</div>
+                <ul class="nav flex-column mb-auto">
+                    <li class="nav-item">
+                        <a href="/Cofrinho/Index" class="nav-link menu-cofrinho @(currentController == "Cofrinho" ? "active" : "")" @(currentController == "Cofrinho" ? "aria-current=page" : "")>
+                            <span class="menu-icone"><i class="bi bi-piggy-bank"></i></span>
+                            <span>Cofrinho</span>
                         </a>
                     </li>
                     @if (User.IsInRole("Admin"))
                     {
                         <li class="nav-item">
-                            <a href="/Usuarios/Index" class="nav-link text-white @(currentController == "Usuarios" ? "active" : "")">
-                                <i class="bi bi-people me-2"></i>
-                                <span class="sidebar-text">Usuários</span>
+                            <a href="/Usuarios/Index" class="nav-link menu-usuarios @(currentController == "Usuarios" ? "active" : "")" @(currentController == "Usuarios" ? "aria-current=page" : "")>
+                                <span class="menu-icone"><i class="bi bi-people"></i></span>
+                                <span>Usuários</span>
                             </a>
                         </li>
                     }
@@ -64,15 +80,12 @@
 
                 <hr>
 
-                <!-- User Dropdown -->
-                <div class="dropdown">
-                    <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-2 user-avatar">
-                            <strong>@User.Identity.Name?.Substring(0, 1).ToUpper()</strong>
-                        </div>
-                        <strong class="sidebar-text">@User.Identity.Name</strong>
+                <div class="dropdown dropup">
+                    <a href="#" class="usuario-menu dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="user-avatar">@User.Identity.Name?.Substring(0, 1).ToUpper()</span>
+                        <span class="fw-semibold text-truncate flex-grow-1">@User.Identity.Name</span>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
+                    <ul class="dropdown-menu dropdown-menu-dark shadow">
                         <li>
                             <form method="post" asp-controller="Auth" asp-action="Logout">
                                 <button type="submit" class="dropdown-item">
@@ -82,11 +95,10 @@
                         </li>
                     </ul>
                 </div>
-            </div>
+            </nav>
 
-            <!-- Main Content -->
             <div class="flex-grow-1 main-content">
-                <main class="p-4">
+                <main>
                     @RenderBody()
                 </main>
             </div>
@@ -94,27 +106,23 @@
     }
     else
     {
-        <!-- Layout para páginas não autenticadas (Login/Register) -->
         @RenderBody()
     }
 
-    <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3">
         <div id="toastNotification" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
                 <div class="toast-body">
                     <span id="toastMessage"></span>
                 </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Fechar"></button>
             </div>
         </div>
     </div>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/toast.js" asp-append-version="true"></script>
-    <script src="~/js/sidebar.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/animations.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

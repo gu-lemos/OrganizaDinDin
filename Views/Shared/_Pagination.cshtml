@@ -1,4 +1,3 @@
-@* Recebe via ViewData: PaginationPage (int), PaginationTotalPages (int), PaginationBaseUrl (string), PaginationInfo (string?) *@
 @{
     var page = (int)ViewData["PaginationPage"]!;
     var totalPages = (int)ViewData["PaginationTotalPages"]!;
@@ -11,7 +10,7 @@
     int windowEnd = Math.Min(totalPages, page + 2);
 }
 
-<div class="d-flex justify-content-between align-items-center mt-3">
+<div class="paginacao">
     <small class="text-muted">@info</small>
 
     <nav aria-label="Paginação">

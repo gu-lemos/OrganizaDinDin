@@ -1,113 +1,125 @@
 @model List<OrganizaDinDin.Domain.Entities.Usuario>
 @{
     ViewData["Title"] = "Usuários";
+    ViewData["Tema"] = "usuarios";
     var currentUserId = (string)ViewBag.CurrentUserId;
+    var ativos = Model.Count(u => u.Ativo);
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/usuarios.css" asp-append-version="true" />
 }
 
-<div class="page-title d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
-    <h1>Gerenciamento de Usuários</h1>
-</div>
-
-<div class="card usuarios-card">
-    <div class="card-header">
-        <h5 class="mb-0"><i class="bi bi-people me-2"></i>Usuários</h5>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover table-striped mb-0">
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var usuario in Model)
-                    {
-                        var isSelf = usuario.Id == currentUserId;
-                        <tr data-id="@usuario.Id">
-                            <td>@usuario.Nome</td>
-                            <td>@usuario.Email</td>
-                            <td>
-                                <span class="badge @(usuario.Role == "Admin" ? "bg-primary" : "bg-secondary")">
-                                    @usuario.Role
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge @(usuario.Ativo ? "bg-success" : "bg-danger")">
-                                    @(usuario.Ativo ? "Ativo" : "Inativo")
-                                </span>
-                            </td>
-                            <td>
-                                <div class="d-flex gap-1 flex-wrap">
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
-                                                data-bs-toggle="dropdown" @(isSelf ? "disabled" : "")>
-                                            Role
-                                        </button>
-                                        <ul class="dropdown-menu">
-                                            <li>
-                                                <button class="dropdown-item btn-alterar-role" data-id="@usuario.Id" data-role="Admin"
-                                                        @(usuario.Role == "Admin" ? "disabled" : "")>
-                                                    Admin
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <button class="dropdown-item btn-alterar-role" data-id="@usuario.Id" data-role="User"
-                                                        @(usuario.Role == "User" ? "disabled" : "")>
-                                                    User
-                                                </button>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                    <button class="btn btn-sm @(usuario.Ativo ? "btn-outline-warning" : "btn-outline-success") btn-toggle-ativo"
-                                            data-id="@usuario.Id" @(isSelf ? "disabled" : "")>
-                                        <i class="bi @(usuario.Ativo ? "bi-person-slash" : "bi-person-check") me-1"></i>
-                                        @(usuario.Ativo ? "Desativar" : "Ativar")
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-dark btn-reset-senha"
-                                            data-id="@usuario.Id" data-nome="@usuario.Nome" @(isSelf ? "disabled" : "")>
-                                        <i class="bi bi-key me-1"></i>Senha
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+<div class="page-header">
+    <div class="page-header-titulo">
+        <span class="page-icon"><i class="bi bi-people"></i></span>
+        <div>
+            <h1>Usuários</h1>
+            <p class="page-subtitulo">@Model.Count cadastrado(s) · @ativos ativo(s)</p>
         </div>
     </div>
 </div>
 
-<!-- Modal Reset Senha -->
+<div class="tabela-card">
+    <table class="table table-hover tabela tabela-cartoes tabela-usuarios">
+        <thead>
+            <tr>
+                <th>Usuário</th>
+                <th>Permissão</th>
+                <th>Status</th>
+                <th class="c-acoes"><span class="visually-hidden">Ações</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var usuario in Model)
+            {
+                var isSelf = usuario.Id == currentUserId;
+                <tr data-id="@usuario.Id">
+                    <td class="c-usuario">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="usuario-avatar">@(string.IsNullOrEmpty(usuario.Nome) ? "?" : usuario.Nome.Substring(0, 1).ToUpper())</span>
+                            <div class="min-w-0">
+                                <div class="fw-semibold text-truncate">
+                                    @usuario.Nome
+                                    @if (isSelf)
+                                    {
+                                        <span class="badge badge-soft ms-1">você</span>
+                                    }
+                                </div>
+                                <div class="c-sub text-truncate">@usuario.Email</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="c-role">
+                        <span class="badge @(usuario.Role == "Admin" ? "badge-area" : "badge-soft")">
+                            <i class="bi @(usuario.Role == "Admin" ? "bi-shield-check" : "bi-person") me-1"></i>@usuario.Role
+                        </span>
+                    </td>
+                    <td class="c-status">
+                        <span class="badge @(usuario.Ativo ? "badge-sucesso" : "badge-perigo")">
+                            @(usuario.Ativo ? "Ativo" : "Inativo")
+                        </span>
+                    </td>
+                    <td class="c-acoes">
+                        <div class="d-flex gap-1 justify-content-end flex-wrap">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light dropdown-toggle" type="button"
+                                        data-bs-toggle="dropdown" @(isSelf ? "disabled" : "")>
+                                    Permissão
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <button class="dropdown-item btn-alterar-role" data-id="@usuario.Id" data-role="Admin"
+                                                @(usuario.Role == "Admin" ? "disabled" : "")>
+                                            <i class="bi bi-shield-check me-2"></i>Admin
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item btn-alterar-role" data-id="@usuario.Id" data-role="User"
+                                                @(usuario.Role == "User" ? "disabled" : "")>
+                                            <i class="bi bi-person me-2"></i>User
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                            <button class="btn btn-sm btn-light btn-toggle-ativo"
+                                    data-id="@usuario.Id" @(isSelf ? "disabled" : "")>
+                                <i class="bi @(usuario.Ativo ? "bi-person-slash text-danger" : "bi-person-check text-success") me-1"></i>
+                                @(usuario.Ativo ? "Desativar" : "Ativar")
+                            </button>
+                            <button class="btn btn-sm btn-light btn-reset-senha"
+                                    data-id="@usuario.Id" data-nome="@usuario.Nome" @(isSelf ? "disabled" : "")>
+                                <i class="bi bi-key me-1"></i>Senha
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
 <div class="modal fade" id="resetSenhaModal" tabindex="-1" aria-labelledby="resetSenhaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="resetSenhaModalLabel">Resetar Senha</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="resetSenhaModalLabel">Redefinir senha</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
-                <p>Resetar senha de <strong id="resetSenhaNome"></strong></p>
+                <p>Nova senha para <strong id="resetSenhaNome"></strong></p>
                 <form id="resetSenhaForm" novalidate>
                     <input type="hidden" id="resetSenhaId" />
-                    <div class="mb-3">
-                        <label for="novaSenha" class="form-label">Nova Senha</label>
-                        <input type="password" class="form-control" id="novaSenha" minlength="6" placeholder="Mínimo 6 caracteres">
+                    <div class="mb-1">
+                        <label for="novaSenha" class="form-label">Nova senha</label>
+                        <input type="password" class="form-control" id="novaSenha" minlength="6" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
                         <div class="invalid-feedback">A senha deve ter no mínimo 6 caracteres</div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-dark" id="btnConfirmarResetSenha">Resetar</button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmarResetSenha">Redefinir</button>
             </div>
         </div>
     </div>

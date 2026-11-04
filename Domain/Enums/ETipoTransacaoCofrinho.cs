@@ -4,10 +4,10 @@ namespace OrganizaDinDin.Domain.Enums
 {
     public enum ETipoTransacaoCofrinho
     {
-        [Description("Deposito")]
-        Deposito,
+        [Description("Depósito")]
+        Deposito = 0,
 
         [Description("Resgate")]
-        Resgate
+        Resgate = 1
     }
 }

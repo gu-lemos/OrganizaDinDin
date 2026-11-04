@@ -1,325 +1,288 @@
-(function() {
+(function () {
     'use strict';
 
-    let gastos = [];
-    let formElements = {};
-    let gastoIdToDelete = null;
+    const { Moeda, marcarCampo, limparValidacao, enviarJson, configurarFiltros, hojeIso, escapeHtml } = App;
 
-    document.addEventListener('DOMContentLoaded', init);
+    const gastos = window.gastosData || [];
+    const compromissos = window.compromissosData || [];
+    const urlListagem = window.gastosIndexUrl || '/Gastos/Index';
+    const $ = id => document.getElementById(id);
 
-    function init() {
-        gastos = window.gastosData || [];
-        cacheElements();
-        attachEventListeners();
+    const gasto = {
+        modal: $('gastoModal'),
+        titulo: $('gastoModalLabel'),
+        form: $('gastoForm'),
+        id: $('gastoId'),
+        conta: $('compromisso'),
+        dica: $('compromissoHint'),
+        descricao: $('descricao'),
+        tipo: $('tipo'),
+        data: $('data'),
+        valor: $('valor'),
+        salvar: $('btnSalvarGasto')
+    };
+
+    const conta = {
+        modal: $('compromissoModal'),
+        titulo: $('compromissoModalLabel'),
+        id: $('compromissoId'),
+        descricao: $('compromissoDescricao'),
+        tipo: $('compromissoTipo'),
+        valorTotal: $('compromissoValorTotal'),
+        parcelas: $('compromissoParcelas'),
+        dataFim: $('compromissoDataFim'),
+        salvar: $('btnSalvarCompromisso')
+    };
+
+    const exclusao = {
+        modal: $('deleteModal'),
+        mensagem: $('deleteModalMensagem'),
+        detalhe: $('deleteModalDetalhe'),
+        confirmar: $('btnConfirmarDelete'),
+        alvo: null
+    };
+
+    const validacoes = {
+        descricao: () => marcarCampo(gasto.descricao, gasto.descricao.value.trim().length >= 5),
+        tipo: () => marcarCampo(gasto.tipo, gasto.tipo.value !== ''),
+        data: () => marcarCampo(gasto.data, gasto.data.value !== ''),
+        valor: () => marcarCampo(gasto.valor, Moeda.paraCentavos(gasto.valor.value) > 0),
+        contaDescricao: () => marcarCampo(conta.descricao, conta.descricao.value.trim().length >= 2),
+        contaTipo: () => marcarCampo(conta.tipo, conta.tipo.value !== ''),
+        contaParcelas: () => {
+            const v = conta.parcelas.value.trim();
+            return marcarCampo(conta.parcelas, v === '' || (/^\d+$/.test(v) && +v >= 1 && +v <= 600));
+        },
+        contaTotalOuData: () => {
+            const ok = Moeda.paraCentavos(conta.valorTotal.value) > 0 || conta.dataFim.value !== '';
+            marcarCampo(conta.valorTotal, ok);
+            return marcarCampo(conta.dataFim, ok);
+        }
+    };
+
+    configurarFiltros(urlListagem);
+    Moeda.aplicarMascara(gasto.valor);
+    Moeda.aplicarMascara(conta.valorTotal);
+
+    $('btnNovoGasto').addEventListener('click', () => abrirGasto());
+    $('btnNovoCompromisso').addEventListener('click', () => abrirConta());
+    gasto.salvar.addEventListener('click', salvarGasto);
+    conta.salvar.addEventListener('click', salvarConta);
+    exclusao.confirmar.addEventListener('click', confirmarExclusao);
+
+    gasto.descricao.addEventListener('input', validacoes.descricao);
+    gasto.tipo.addEventListener('change', validacoes.tipo);
+    gasto.data.addEventListener('change', validacoes.data);
+    gasto.valor.addEventListener('input', validacoes.valor);
+    gasto.conta.addEventListener('change', () => aplicarConta(false));
+
+    conta.descricao.addEventListener('input', validacoes.contaDescricao);
+    conta.tipo.addEventListener('change', validacoes.contaTipo);
+    conta.parcelas.addEventListener('input', validacoes.contaParcelas);
+    conta.valorTotal.addEventListener('input', validacoes.contaTotalOuData);
+    conta.dataFim.addEventListener('change', validacoes.contaTotalOuData);
+
+    $('gastosTableBody').addEventListener('click', e => {
+        const botao = e.target.closest('button');
+        if (!botao) return;
+        if (botao.classList.contains('btn-editar')) editarGasto(botao.dataset.gastoId);
+        if (botao.classList.contains('btn-deletar')) pedirExclusao('gasto', botao.dataset.gastoId);
+    });
+
+    document.addEventListener('click', e => {
+        const botao = e.target.closest('[data-acao]');
+        if (!botao) return;
+
+        const id = botao.dataset.id;
+        switch (botao.dataset.acao) {
+            case 'nova-conta': abrirConta(); break;
+            case 'editar-conta': abrirConta(id); break;
+            case 'excluir-conta': pedirExclusao('conta', id); break;
+            case 'pagar-conta': abrirGasto(id); break;
+        }
+    });
+
+    function abrirGasto(compromissoId = '') {
+        gasto.titulo.textContent = compromissoId ? 'Registrar Pagamento' : 'Novo Gasto';
+        gasto.form.reset();
+        gasto.id.value = '';
+        gasto.valor.value = '0,00';
+        gasto.data.value = hojeIso();
+        gasto.conta.value = compromissoId;
+        limparValidacao(gasto.form);
+
+        aplicarConta(true);
+        bootstrap.Modal.getOrCreateInstance(gasto.modal).show();
     }
 
-    function cacheElements() {
-        formElements = {
-            form: document.getElementById('gastoForm'),
-            gastoId: document.getElementById('gastoId'),
-            descricao: document.getElementById('descricao'),
-            tipo: document.getElementById('tipo'),
-            data: document.getElementById('data'),
-            valor: document.getElementById('valor'),
-            btnSalvar: document.getElementById('btnSalvarGasto'),
-            btnNovoGasto: document.getElementById('btnNovoGasto'),
-            modal: document.getElementById('gastoModal'),
-            modalTitle: document.getElementById('gastoModalLabel'),
-            deleteModal: document.getElementById('deleteModal'),
-            btnConfirmarDelete: document.getElementById('btnConfirmarDelete'),
-            btnLimparFiltros: document.getElementById('btnLimparFiltros'),
-            filterForm: document.getElementById('filterForm'),
-            filtroDataInicio: document.getElementById('filtroDataInicio'),
-            filtroDataFim: document.getElementById('filtroDataFim'),
-            dropdownTipo: document.querySelector('.dropdown-tipo'),
-            dropdownTipoToggle: document.querySelector('.dropdown-tipo-toggle'),
-            dropdownTipoText: document.querySelector('.dropdown-tipo-text'),
-            dropdownTipoCheckboxes: document.querySelectorAll('.dropdown-tipo-item input[type="checkbox"]'),
-            filterCard: document.getElementById('filterCard'),
-            filterCardHeader: document.getElementById('filterCardHeader'),
-            filterCardBody: document.getElementById('filterCardBody'),
-            filterToggleIcon: document.getElementById('filterToggleIcon')
-        };
+    function editarGasto(id) {
+        const item = gastos.find(g => g.Id === id);
+        if (!item) return;
+
+        gasto.titulo.textContent = 'Editar Gasto';
+        gasto.id.value = item.Id;
+        gasto.descricao.value = item.Descricao;
+        gasto.tipo.value = item.Tipo;
+        gasto.data.value = item.Data.split('T')[0];
+        gasto.valor.value = Moeda.formatar(item.Valor);
+        gasto.conta.value = item.CompromissoId || '';
+        limparValidacao(gasto.form);
+
+        atualizarDica();
+        bootstrap.Modal.getOrCreateInstance(gasto.modal).show();
     }
 
-    function attachEventListeners() {
-        formElements.btnNovoGasto.addEventListener('click', handleNovoGasto);
+    function contaSelecionada() {
+        return compromissos.find(c => c.Id === gasto.conta.value) || null;
+    }
 
-        formElements.btnSalvar.addEventListener('click', handleSalvarGasto);
+    function aplicarConta(trocarDescricao) {
+        atualizarDica();
+        const c = contaSelecionada();
+        if (!c) return;
 
-        formElements.btnConfirmarDelete.addEventListener('click', confirmarDelete);
+        gasto.tipo.value = c.Tipo;
+        validacoes.tipo();
 
-        document.getElementById('gastosTableBody').addEventListener('click', handleTableClick);
+        if (trocarDescricao || gasto.descricao.value.trim() === '') {
+            gasto.descricao.value = c.Descricao.length >= 5 ? c.Descricao : `Pagamento ${c.Descricao}`;
+        }
+    }
 
-        formElements.descricao.addEventListener('input', () => validateField('descricao'));
-        formElements.tipo.addEventListener('change', () => validateField('tipo'));
-        formElements.data.addEventListener('change', () => validateField('data'));
-        formElements.valor.addEventListener('input', handleValorInput);
-        formElements.valor.addEventListener('blur', () => validateField('valor'));
+    function valorSugerido(c) {
+        if (!c.TemValorTotal) return c.MediaRecente || 0;
+        const restantes = (c.TotalParcelas || 0) - c.QuantidadePagamentos;
+        return restantes > 0 && c.ValorRestante > 0 ? Math.round(c.ValorRestante / restantes) : 0;
+    }
 
-        formElements.modal.addEventListener('show.bs.modal', clearValidation);
+    function atualizarDica() {
+        const c = contaSelecionada();
+        const icone = '<i class="bi bi-info-circle me-1"></i>';
 
-        if (formElements.btnLimparFiltros) {
-            formElements.btnLimparFiltros.addEventListener('click', limparFiltros);
+        if (!c) {
+            gasto.dica.innerHTML = `${icone}Será registrado como <strong>parcela única</strong>.`
+                + (compromissos.length ? ' Para numerar as parcelas e ver quanto falta, escolha uma conta.' : '');
+            return;
         }
 
-        if (formElements.dropdownTipo) {
-            setupDropdownTipo();
+        const jaVinculado = gastos.some(g => g.Id === gasto.id.value && g.CompromissoId === c.Id);
+        const partes = [];
+
+        if (!jaVinculado) {
+            const total = c.TotalParcelasEfetivo ? `/${c.ParcelasEstimadas ? '~' : ''}${c.TotalParcelasEfetivo}` : '';
+            partes.push(`Será a parcela ${c.QuantidadePagamentos + 1}${total}`);
         }
 
-        if (formElements.filterCardHeader) {
-            formElements.filterCardHeader.addEventListener('click', toggleFilterCard);
+        if (c.TemValorTotal) {
+            partes.push(c.ValorRestante > 0
+                ? `Falta R$ ${Moeda.exibir(c.ValorRestante)} de R$ ${Moeda.exibir(c.ValorTotal)}`
+                : 'Conta já quitada');
+        } else if (c.DataFim) {
+            const [ano, mes] = c.DataFim.split('-');
+            partes.push(`Até ${mes}/${ano}`);
         }
+
+        gasto.dica.innerHTML = icone + escapeHtml(partes.join(' · '));
+
+        const sugestao = jaVinculado ? 0 : valorSugerido(c);
+        if (sugestao <= 0) return;
+
+        const usar = document.createElement('button');
+        usar.type = 'button';
+        usar.className = 'btn btn-link btn-sm p-0 align-baseline d-block';
+        usar.title = c.TemValorTotal ? 'Restante ÷ parcelas que faltam' : 'Média dos últimos pagamentos';
+        usar.textContent = `Usar valor sugerido: R$ ${Moeda.exibir(sugestao)}`;
+        usar.addEventListener('click', () => {
+            gasto.valor.value = Moeda.formatar(sugestao);
+            validacoes.valor();
+        });
+        gasto.dica.appendChild(usar);
     }
 
-    function handleTableClick(e) {
-        const btn = e.target.closest('button');
-        if (!btn) return;
-
-        const gastoId = btn.dataset.gastoId;
-
-        if (btn.classList.contains('btn-editar')) {
-            handleEditarGasto(gastoId);
-        } else if (btn.classList.contains('btn-deletar')) {
-            handleDeletarGasto(gastoId);
-        }
-    }
-
-    function handleNovoGasto() {
-        formElements.modalTitle.textContent = 'Novo Gasto';
-        formElements.form.reset();
-        formElements.gastoId.value = '';
-        formElements.valor.value = '0,00';
-        clearValidation();
-    }
-
-    function handleEditarGasto(id) {
-        const gasto = gastos.find(g => g.Id === id);
-        if (!gasto) return;
-
-        formElements.modalTitle.textContent = 'Editar Gasto';
-        formElements.gastoId.value = gasto.Id;
-        formElements.descricao.value = gasto.Descricao;
-        formElements.tipo.value = gasto.Tipo;
-        formElements.data.value = gasto.Data.split('T')[0];
-        formElements.valor.value = formatarValor(gasto.Valor);
-
-        clearValidation();
-
-        const modal = new bootstrap.Modal(formElements.modal);
-        modal.show();
-    }
-
-    function handleDeletarGasto(id) {
-        gastoIdToDelete = id;
-        const modal = new bootstrap.Modal(formElements.deleteModal);
-        modal.show();
-    }
-
-    async function confirmarDelete() {
-        if (!gastoIdToDelete) return;
-
-        btnLoading(formElements.btnConfirmarDelete, 'Deletando...');
-
-        const modal = bootstrap.Modal.getInstance(formElements.deleteModal);
-        modal.hide();
-
-        try {
-            const response = await fetch('/Gastos/Delete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(gastoIdToDelete)
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                showToast('Gasto deletado com sucesso!', 'success');
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                showToast(data.message, 'error');
-                btnReset(formElements.btnConfirmarDelete);
-            }
-        } catch (error) {
-            showToast('Erro ao deletar gasto: ' + error, 'error');
-            btnReset(formElements.btnConfirmarDelete);
-        } finally {
-            gastoIdToDelete = null;
-        }
-    }
-
-    async function handleSalvarGasto() {
-        if (!validateForm()) {
+    function salvarGasto() {
+        const valido = [validacoes.descricao, validacoes.tipo, validacoes.data, validacoes.valor].map(v => v()).every(Boolean);
+        if (!valido) {
             showToast('Por favor, corrija os erros no formulário', 'error');
             return;
         }
 
-        btnLoading(formElements.btnSalvar, 'Salvando...');
-
-        const id = formElements.gastoId.value;
-        const gasto = {
+        const id = gasto.id.value;
+        enviarJson(id ? '/Gastos/Update' : '/Gastos/Create', {
             Id: id || null,
-            Descricao: formElements.descricao.value.trim(),
-            Tipo: parseInt(formElements.tipo.value),
-            Data: formElements.data.value,
-            Valor: converterParaCentavos(formElements.valor.value)
-        };
-
-        const url = id ? '/Gastos/Update' : '/Gastos/Create';
-
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(gasto)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                showToast(id ? 'Gasto atualizado com sucesso!' : 'Gasto criado com sucesso!', 'success');
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                showToast(result.message, 'error');
-                btnReset(formElements.btnSalvar);
-            }
-        } catch (error) {
-            showToast('Erro ao salvar gasto: ' + error, 'error');
-            btnReset(formElements.btnSalvar);
-        }
+            Descricao: gasto.descricao.value.trim(),
+            Tipo: parseInt(gasto.tipo.value, 10),
+            Data: gasto.data.value,
+            Valor: Moeda.paraCentavos(gasto.valor.value),
+            CompromissoId: gasto.conta.value || null
+        }, { botao: gasto.salvar, sucesso: id ? 'Gasto atualizado com sucesso!' : 'Gasto criado com sucesso!' });
     }
 
-    function handleValorInput(e) {
-        e.target.value = aplicarMascaraMoeda(e.target.value);
-        validateField('valor');
+    function abrirConta(id) {
+        const c = id ? compromissos.find(x => x.Id === id) : null;
+
+        conta.titulo.textContent = c ? 'Editar Conta' : 'Nova Conta';
+        conta.id.value = c ? c.Id : '';
+        conta.descricao.value = c ? c.Descricao : '';
+        conta.tipo.value = c ? c.Tipo : '';
+        conta.valorTotal.value = c ? Moeda.formatar(c.ValorTotal) : '0,00';
+        conta.parcelas.value = c && c.TotalParcelas ? c.TotalParcelas : '';
+        conta.dataFim.value = c && c.DataFim ? c.DataFim : '';
+        limparValidacao(conta.modal);
+
+        bootstrap.Modal.getOrCreateInstance(conta.modal).show();
     }
 
-    function validateForm() {
-        const validations = [
-            validateField('descricao'),
-            validateField('tipo'),
-            validateField('data'),
-            validateField('valor')
-        ];
+    function salvarConta() {
+        const valido = [validacoes.contaDescricao, validacoes.contaTipo, validacoes.contaParcelas, validacoes.contaTotalOuData]
+            .map(v => v())
+            .every(Boolean);
 
-        return validations.every(v => v === true);
-    }
-
-    function validateField(fieldName) {
-        const field = formElements[fieldName];
-        let isValid = true;
-
-        switch (fieldName) {
-            case 'descricao':
-                const length = field.value.trim().length;
-                isValid = length >= 5 && length <= 200;
-                break;
-
-            case 'tipo':
-                isValid = field.value !== '';
-                break;
-
-            case 'data':
-                isValid = field.value !== '';
-                break;
-
-            case 'valor':
-                const valorCentavos = converterParaCentavos(field.value);
-                isValid = valorCentavos > 0;
-                break;
+        if (!valido) {
+            showToast('Por favor, corrija os erros no formulário', 'error');
+            return;
         }
 
-        if (isValid) {
-            field.classList.remove('is-invalid');
-            field.classList.add('is-valid');
+        const id = conta.id.value;
+        const parcelas = conta.parcelas.value.trim();
+        enviarJson(id ? '/Compromissos/Update' : '/Compromissos/Create', {
+            Id: id || null,
+            Descricao: conta.descricao.value.trim(),
+            Tipo: parseInt(conta.tipo.value, 10),
+            ValorTotal: Moeda.paraCentavos(conta.valorTotal.value),
+            TotalParcelas: parcelas ? parseInt(parcelas, 10) : null,
+            DataFim: conta.dataFim.value || null
+        }, { botao: conta.salvar, sucesso: id ? 'Conta atualizada com sucesso!' : 'Conta criada com sucesso!' });
+    }
+
+    function pedirExclusao(tipo, id) {
+        exclusao.alvo = { tipo, id };
+
+        if (tipo === 'conta') {
+            const c = compromissos.find(x => x.Id === id);
+            exclusao.mensagem.textContent = `Tem certeza que deseja excluir a conta "${c ? c.Descricao : ''}"?`;
+            exclusao.detalhe.textContent = 'Os pagamentos já registrados continuam na lista de gastos, apenas deixam de estar vinculados a ela.';
         } else {
-            field.classList.remove('is-valid');
-            field.classList.add('is-invalid');
+            exclusao.mensagem.textContent = 'Tem certeza que deseja excluir este gasto?';
+            exclusao.detalhe.textContent = 'Esta ação não pode ser desfeita.';
         }
 
-        return isValid;
+        bootstrap.Modal.getOrCreateInstance(exclusao.modal).show();
     }
 
-    function clearValidation() {
-        const fields = [
-            formElements.descricao,
-            formElements.tipo,
-            formElements.data,
-            formElements.valor
-        ];
+    async function confirmarExclusao() {
+        if (!exclusao.alvo) return;
 
-        fields.forEach(field => {
-            field.classList.remove('is-invalid', 'is-valid');
-        });
-    }
+        const { tipo, id } = exclusao.alvo;
+        const ehConta = tipo === 'conta';
+        const filtrandoPelaConta = ehConta && new URLSearchParams(location.search).get('compromissoId') === id;
 
-    function aplicarMascaraMoeda(valor) {
-        valor = valor.replace(/\D/g, '');
-
-        if (!valor || valor === '') {
-            return '0,00';
-        }
-
-        const numero = parseInt(valor) || 0;
-        valor = (numero / 100).toFixed(2);
-
-        valor = valor.replace('.', ',');
-        valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
-
-        return valor;
-    }
-
-    function converterParaCentavos(valorFormatado) {
-        const valorLimpo = valorFormatado.replace(/\./g, '').replace(',', '.');
-        return Math.round(parseFloat(valorLimpo) * 100);
-    }
-
-    function formatarValor(centavos) {
-        return (centavos / 100).toFixed(2).replace('.', ',');
-    }
-
-    function limparFiltros() {
-        window.location.href = '/Gastos/Index';
-    }
-
-    function setupDropdownTipo() {
-        formElements.dropdownTipoToggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            formElements.dropdownTipo.classList.toggle('active');
+        await enviarJson(ehConta ? '/Compromissos/Delete' : '/Gastos/Delete', id, {
+            botao: exclusao.confirmar,
+            carregando: 'Excluindo...',
+            sucesso: ehConta ? 'Conta excluída com sucesso!' : 'Gasto excluído com sucesso!',
+            depois: filtrandoPelaConta ? () => location.assign(urlListagem) : undefined
         });
 
-        document.addEventListener('click', (e) => {
-            if (!formElements.dropdownTipo.contains(e.target)) {
-                formElements.dropdownTipo.classList.remove('active');
-            }
-        });
-
-        formElements.dropdownTipoCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', updateDropdownText);
-        });
-
-        updateDropdownText();
+        exclusao.alvo = null;
     }
-
-    function updateDropdownText() {
-        const selectedCheckboxes = Array.from(formElements.dropdownTipoCheckboxes).filter(cb => cb.checked);
-        const selectedCount = selectedCheckboxes.length;
-
-        if (selectedCount === 0) {
-            formElements.dropdownTipoText.textContent = 'Selecione os tipos...';
-        } else if (selectedCount === 1) {
-            formElements.dropdownTipoText.textContent = selectedCheckboxes[0].nextElementSibling.textContent;
-        } else {
-            const selectedNames = selectedCheckboxes.map(cb => cb.nextElementSibling.textContent);
-            const lastItem = selectedNames.pop();
-            formElements.dropdownTipoText.textContent = selectedNames.join(', ') + ' e ' + lastItem;
-        }
-    }
-
-    function toggleFilterCard() {
-        formElements.filterCard.classList.toggle('collapsed');
-        formElements.filterCardHeader.classList.toggle('collapsed');
-        formElements.filterCardBody.classList.toggle('collapsed');
-    }
-
 })();

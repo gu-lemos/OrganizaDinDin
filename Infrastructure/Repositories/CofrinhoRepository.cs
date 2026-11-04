@@ -1,6 +1,7 @@
 using Google.Cloud.Firestore;
 using OrganizaDinDin.Domain.Interfaces;
 using OrganizaDinDin.Domain.Entities;
+using OrganizaDinDin.Helpers;
 
 namespace OrganizaDinDin.Infrastructure.Repositories
 {
@@ -27,13 +28,13 @@ namespace OrganizaDinDin.Infrastructure.Repositories
 
             if (dataInicio.HasValue)
             {
-                var dataInicioUtc = DateTime.SpecifyKind(dataInicio.Value.Date, DateTimeKind.Utc);
+                var dataInicioUtc = DataHelper.InicioDoDiaUtc(dataInicio.Value);
                 query = query.WhereGreaterThanOrEqualTo("DataTimestamp", Timestamp.FromDateTime(dataInicioUtc));
             }
 
             if (dataFim.HasValue)
             {
-                var dataFimUtc = DateTime.SpecifyKind(dataFim.Value.Date.AddDays(1).AddSeconds(-1), DateTimeKind.Utc);
+                var dataFimUtc = DataHelper.FimDoDiaUtc(dataFim.Value);
                 query = query.WhereLessThanOrEqualTo("DataTimestamp", Timestamp.FromDateTime(dataFimUtc));
             }
 

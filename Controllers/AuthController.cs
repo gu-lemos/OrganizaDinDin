@@ -1,9 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using System.Security.Claims;
-using OrganizaDinDin.Application.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 using OrganizaDinDin.Application.DTOs;
+using OrganizaDinDin.Application.Interfaces;
 
 namespace OrganizaDinDin.Controllers
 {
@@ -12,12 +12,12 @@ namespace OrganizaDinDin.Controllers
         private readonly IAuthService _authService = authService;
 
         [HttpGet]
-        public IActionResult Login()
-        {
-            return View();
-        }
+        public IActionResult Login() => User.Identity?.IsAuthenticated == true
+            ? RedirectToAction("Index", "Gastos")
+            : View();
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginDto model)
         {
             if (!ModelState.IsValid)
@@ -39,43 +39,38 @@ namespace OrganizaDinDin.Controllers
                 new(ClaimTypes.Role, usuario.Role ?? string.Empty)
             };
 
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = true,
-                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
-            };
-
             await HttpContext.SignInAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
-                authProperties);
+                new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)),
+                new AuthenticationProperties { IsPersistent = true });
 
             return RedirectToAction("Index", "Gastos");
         }
 
         [HttpGet]
-        public IActionResult Register()
-        {
-            return View();
-        }
+        public IActionResult Register() => View();
 
         [HttpPost]
-        public async Task<IActionResult> Register(string nome, string email, string senha)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Register(RegisterDto model)
         {
+            if (!ModelState.IsValid)
+                return View(model);
+
             try
             {
-                await _authService.RegisterAsync(nome, email, senha);
+                await _authService.RegisterAsync(model.Nome, model.Email, model.Senha);
                 return RedirectToAction("Login");
             }
-            catch (Exception ex)
+            catch (InvalidOperationException ex)
             {
                 ModelState.AddModelError(string.Empty, ex.Message);
-                return View();
+                return View(model);
             }
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -83,9 +78,9 @@ namespace OrganizaDinDin.Controllers
         }
 
         [HttpGet]
-        public IActionResult AccessDenied()
-        {
-            return View();
-        }
+        public IActionResult AccessDenied() => View();
+
+        [Route("/Erro")]
+        public IActionResult Erro() => View();
     }
 }

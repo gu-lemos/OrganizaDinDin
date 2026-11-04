@@ -1,460 +1,72 @@
-.page-title {
-    margin-bottom: 1.5rem;
-}
-
-.page-title h1 {
-    font-size: 2rem;
-    font-weight: 600;
-    color: #212529;
-}
-
-/* Saldo */
-.saldo-card {
-    border: none;
-    border-radius: 0.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.saldo-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.saldo-card .card-body {
-    padding: 1.25rem 1.5rem;
-}
-
-.saldo-card .card-title {
-    font-size: 0.9rem;
-    font-weight: 500;
-    opacity: 0.9;
-    margin-bottom: 0.25rem;
-}
-
-.saldo-card .card-text {
-    font-size: 1.75rem;
-    font-weight: 700;
-    margin: 0;
-}
-
-/* Meta */
-.meta-card {
-    border: none;
-    border-radius: 0.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.meta-card .card-body {
-    padding: 1.25rem 1.5rem;
-}
-
-.meta-card h5 {
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #495057;
-}
-
-.meta-progress {
-    height: 20px;
-    border-radius: 0.375rem;
-}
-
-.meta-progress .progress-bar {
-    font-size: 0.78rem;
-    font-weight: 600;
-    min-width: 2rem;
-}
-
-.meta-card-empty {
-    border: 1px dashed #dee2e6;
-    border-radius: 0.5rem;
-    background-color: #f8f9fa;
-}
-
-/* Filter card — mesmo padrão do Gastos */
-.filter-card {
-    border: none;
-    border-radius: 0.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: box-shadow 0.3s ease;
-    background-color: transparent;
-}
-
-.filter-card.collapsed {
-    box-shadow: none;
-    background-color: transparent;
-}
-
-.filter-card .card-header {
-    background-color: #212529;
-    color: white;
-    border-bottom: none;
-    border-radius: 0.5rem 0.5rem 0 0;
-    padding: 0.75rem 1rem;
-    transition: border-radius 0.3s ease;
-}
-
-.filter-card.collapsed .card-header {
-    border-radius: 0.5rem;
-}
-
-.filter-card .card-header h5 {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.filter-card-header {
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    user-select: none;
-}
-
-.filter-card-header i#filterToggleIcon {
-    transition: transform 0.3s ease;
-}
-
-.filter-card-header.collapsed i#filterToggleIcon {
-    transform: rotate(180deg);
-}
-
-.card-body {
-    transition: max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease;
-    max-height: 1000px;
-    opacity: 1;
-}
-
-.card-body.collapsed {
-    max-height: 0 !important;
-    opacity: 0;
-    padding: 0 !important;
-    margin: 0;
-    border: none;
-    display: none;
-}
-
-.filter-card .card-body {
-    padding: 1.25rem;
-}
-
-.filter-card .form-label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-    color: #495057;
-}
-
-.dropdown-tipo {
+.cofrinho-hero {
+    border-radius: var(--radius);
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--shadow);
     position: relative;
+    overflow: hidden;
 }
 
-.dropdown-tipo-toggle {
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: #fff;
-    padding-right: 2.5rem;
-}
-
-.dropdown-tipo-toggle:hover {
-    background-color: #fff;
-}
-
-.dropdown-tipo-toggle i {
+.cofrinho-hero-deco {
     position: absolute;
-    right: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    transition: transform 0.2s ease;
+    right: -0.5rem;
+    bottom: -2.2rem;
+    font-size: 9rem;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.08);
+    pointer-events: none;
 }
 
-.dropdown-tipo.active .dropdown-tipo-toggle i {
-    transform: translateY(-50%) rotate(180deg);
+.cofrinho-meta-btn {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    position: relative;
+    z-index: 1;
 }
 
-.dropdown-tipo-text {
+.cofrinho-meta-btn:hover {
+    background: rgba(255, 255, 255, 0.26);
+    color: #fff;
+}
+
+.cofrinho-progress {
+    height: 12px;
+    border-radius: 999px;
+}
+
+.cofrinho-progress .progress-bar {
+    border-radius: 999px;
+}
+
+.tabela-cofrinho .c-data {
+    color: var(--c-text-muted);
+    white-space: nowrap;
+}
+
+.tabela-cofrinho .c-motivo {
+    color: var(--c-text-muted);
+    max-width: 18rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    flex: 1;
 }
 
-.dropdown-tipo-menu {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    z-index: 1000;
-    background-color: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    margin-top: 0.25rem;
-    max-height: 250px;
-    overflow-y: auto;
-}
-
-.dropdown-tipo.active .dropdown-tipo-menu {
-    display: block;
-}
-
-.dropdown-tipo-item {
-    display: flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    margin: 0;
-}
-
-.dropdown-tipo-item:hover {
-    background-color: #f8f9fa;
-}
-
-.dropdown-tipo-item input[type="checkbox"] {
-    margin-right: 0.5rem;
-    cursor: pointer;
-    width: 1.125rem;
-    height: 1.125rem;
-    accent-color: #212529;
-}
-
-.dropdown-tipo-item span {
-    flex: 1;
-    user-select: none;
-}
-
-/* Tabela — mesmo padrão do Gastos */
-.table-responsive {
-    border-radius: 0.375rem;
-    overflow-x: auto;
-    width: 100%;
-}
-
-.table {
-    margin-bottom: 0;
-    width: 100%;
-    min-width: 100%;
-}
-
-.table thead {
-    background-color: #f8f9fa;
-}
-
-.table thead th {
-    font-weight: 600;
-    text-transform: uppercase;
-    font-size: 0.875rem;
-    color: #6c757d;
-    border-bottom: 2px solid #dee2e6;
-}
-
-.table tbody tr {
-    transition: background-color 0.2s ease;
-}
-
-.table tbody tr:hover {
-    background-color: #f8f9fa;
-}
-
-.table tbody td:last-child {
-    white-space: nowrap;
-}
-
-.valor-positivo {
-    color: #198754;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.valor-negativo {
-    color: #dc3545;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-}
-
-tfoot tr {
-    font-weight: 600;
-    background-color: #e9ecef;
-}
-
-tfoot td {
-    padding: 0.75rem;
-}
-
-tfoot .valor-positivo {
-    color: #198754;
-}
-
-/* Modais */
-.modal-header {
-    background: #212529;
-    color: white;
-}
-
-.modal-title {
-    color: #fff;
-    font-weight: 600;
-}
-
-.btn-close-white {
-    filter: brightness(0) invert(1);
-}
-
-.form-label {
-    font-weight: 500;
-    margin-bottom: 0.5rem;
-    color: #495057;
-}
-
-.form-control:focus,
-.form-select:focus {
-    border-color: #86b7fe;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-}
-
-.invalid-feedback {
-    display: none;
-    margin-top: 0.25rem;
-    font-size: 0.875rem;
-    color: #dc3545;
-}
-
-.is-invalid ~ .invalid-feedback {
-    display: block;
-}
-
-.is-valid {
-    border-color: #198754 !important;
-}
-
-.is-invalid {
-    border-color: #dc3545 !important;
-}
-
-.input-group.has-validation .form-control:invalid,
-.input-group.has-validation .form-control.is-invalid {
-    border-right: 1px solid #dc3545;
-}
-
-@media (max-width: 768px) {
-    .page-title h1 {
-        font-size: 1.5rem;
+@media (max-width: 767px) {
+    .cofrinho-hero {
+        padding: 1.1rem 1.1rem;
     }
 
-    .saldo-card .card-text {
-        font-size: 1.4rem;
+    .tabela-cofrinho tbody tr {
+        grid-template-columns: auto auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            "quem quem quem   valor"
+            "tipo data motivo acoes";
     }
 
-    #btnDepositar,
-    #btnResgatar {
-        font-size: 0.875rem;
-    }
-
-    .page-title .d-flex.gap-2 {
-        flex-direction: column;
-        width: 100%;
-    }
-
-    .page-title #btnDepositar,
-    .page-title #btnResgatar {
-        width: 100%;
-    }
-
-    #btnLimparFiltros {
-        align-items: center;
-        justify-content: center;
-        display: flex;
-        font-size: 0.75rem;
-        width: 100px;
-        height: 28px;
-        padding: 0.25rem;
-    }
-
-    .table {
-        font-size: 0.875rem;
-    }
-
-    .table thead th {
-        font-size: 0.75rem;
-        padding: 0.5rem 0.25rem;
-        white-space: nowrap;
-    }
-
-    .table tbody td {
-        padding: 0.5rem 0.25rem;
-    }
-
-    tfoot td {
-        padding: 0.5rem 0.25rem;
-    }
-
-    .btn-sm {
-        padding: 0.125rem 0.25rem;
-        font-size: 0.75rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .page-title h1 {
-        font-size: 1.25rem;
-    }
-
-    .saldo-card .card-text {
-        font-size: 1.25rem;
-    }
-
-    #btnDepositar,
-    #btnResgatar {
-        flex: 1;
-    }
-
-    .table {
-        font-size: 0.8rem;
-    }
-
-    .table thead th {
-        font-size: 0.7rem;
-        padding: 0.4rem 0.2rem;
-    }
-
-    .table tbody td {
-        padding: 0.4rem 0.2rem;
-    }
-
-    /* Esconde coluna Motivo em telas muito pequenas */
-    .table th:nth-child(5),
-    .table td:nth-child(5) {
-        display: none;
-    }
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.table tbody tr {
-    animation: fadeIn 0.3s ease;
-}
-
-.saldo-card,
-.meta-card,
-.meta-card-empty {
-    animation: fadeIn 0.3s ease;
+    .tabela-cofrinho .c-quem   { grid-area: quem; }
+    .tabela-cofrinho .c-valor  { grid-area: valor; font-size: 1rem; }
+    .tabela-cofrinho .c-tipo   { grid-area: tipo; }
+    .tabela-cofrinho .c-data   { grid-area: data; font-size: 0.8rem; }
+    .tabela-cofrinho .c-motivo { grid-area: motivo; font-size: 0.8rem; max-width: none; }
+    .tabela-cofrinho .c-acoes  { grid-area: acoes; margin-right: -0.4rem; }
 }

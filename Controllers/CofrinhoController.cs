@@ -1,110 +1,57 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using OrganizaDinDin.Application.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 using OrganizaDinDin.Application.DTOs;
 using OrganizaDinDin.Application.Filters;
+using OrganizaDinDin.Application.Interfaces;
 
 namespace OrganizaDinDin.Controllers
 {
     [Authorize(Policy = "UserAccess")]
-    public class CofrinhoController(ICofrinhoService cofrinhoService) : Controller
+    public class CofrinhoController(ICofrinhoService cofrinhoService) : AppController
     {
-        private readonly ICofrinhoService _cofrinhoService = cofrinhoService;
+        private const int TamanhoPagina = 12;
 
-        private const int PageSize = 12;
+        private readonly ICofrinhoService _cofrinhoService = cofrinhoService;
 
         public async Task<IActionResult> Index(List<int>? tipos, string? usuarioId, DateTime? dataInicio, DateTime? dataFim, int pagina = 1)
         {
             pagina = Math.Max(1, pagina);
-            var transacoesPaginadas = await _cofrinhoService.GetTransacoesFilteredAsync(tipos, usuarioId, dataInicio, dataFim, pagina, PageSize);
-            var saldoAtual = await _cofrinhoService.GetSaldoAsync();
-            var usuarios = await _cofrinhoService.GetUsuariosAsync();
-            var meta = await _cofrinhoService.GetMetaAsync();
 
-            ViewBag.Saldo = saldoAtual;
-            ViewBag.Meta = meta;
-            ViewBag.Usuarios = usuarios.ToDictionary(u => u.Id!, u => u.Nome);
-            ViewBag.Tipos = tipos ?? new List<int>();
+            var transacoesTask = _cofrinhoService.GetTransacoesFilteredAsync(tipos, usuarioId, dataInicio, dataFim, pagina, TamanhoPagina);
+            var saldoTask = _cofrinhoService.GetSaldoAsync();
+            var usuariosTask = _cofrinhoService.GetUsuariosAsync();
+            var metaTask = _cofrinhoService.GetMetaAsync();
+            await Task.WhenAll(transacoesTask, saldoTask, usuariosTask, metaTask);
+
+            ViewBag.Saldo = saldoTask.Result;
+            ViewBag.Meta = metaTask.Result;
+            ViewBag.Usuarios = usuariosTask.Result.ToDictionary(u => u.Id!, u => u.Nome);
+            ViewBag.Tipos = tipos ?? [];
             ViewBag.UsuarioId = usuarioId;
             ViewBag.DataInicio = dataInicio?.ToString("yyyy-MM-dd");
             ViewBag.DataFim = dataFim?.ToString("yyyy-MM-dd");
 
-            return View(transacoesPaginadas);
+            return View(transacoesTask.Result);
         }
 
         [HttpPost]
         [ValidateModel]
-        public async Task<IActionResult> Depositar([FromBody] CofrinhoDepositoDto dto)
-        {
-            try
-            {
-                var transacao = await _cofrinhoService.DepositarAsync(dto);
-                return Json(new { success = true, data = transacao });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
+        public Task<IActionResult> Depositar([FromBody] CofrinhoDepositoDto dto) => ExecutarAsync(() => _cofrinhoService.DepositarAsync(dto));
 
         [HttpPost]
         [ValidateModel]
-        public async Task<IActionResult> Resgatar([FromBody] CofrinhoResgateDto dto)
-        {
-            try
-            {
-                var transacao = await _cofrinhoService.ResgatarAsync(dto);
-                return Json(new { success = true, data = transacao });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
+        public Task<IActionResult> Resgatar([FromBody] CofrinhoResgateDto dto) => ExecutarAsync(() => _cofrinhoService.ResgatarAsync(dto));
 
         [HttpPost]
         [ValidateModel]
-        public async Task<IActionResult> Editar([FromBody] CofrinhoEditarDto dto)
-        {
-            try
-            {
-                var transacao = await _cofrinhoService.EditarAsync(dto);
-                return Json(new { success = true, data = transacao });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
+        public Task<IActionResult> Editar([FromBody] CofrinhoEditarDto dto) => ExecutarAsync(() => _cofrinhoService.EditarAsync(dto));
 
         [HttpPost]
         [ValidateModel]
-        public async Task<IActionResult> Excluir([FromBody] CofrinhoExcluirDto dto)
-        {
-            try
-            {
-                await _cofrinhoService.ExcluirAsync(dto.Id);
-                return Json(new { success = true });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
+        public Task<IActionResult> Excluir([FromBody] CofrinhoExcluirDto dto) => ExecutarAsync(() => _cofrinhoService.ExcluirAsync(dto.Id));
 
         [HttpPost]
         [ValidateModel]
-        public async Task<IActionResult> SetMeta([FromBody] CofrinhoMetaDto dto)
-        {
-            try
-            {
-                await _cofrinhoService.SetMetaAsync(dto);
-                return Json(new { success = true });
-            }
-            catch (Exception ex)
-            {
-                return Json(new { success = false, message = ex.Message });
-            }
-        }
+        public Task<IActionResult> SetMeta([FromBody] CofrinhoMetaDto dto) => ExecutarAsync(() => _cofrinhoService.SetMetaAsync(dto));
     }
 }

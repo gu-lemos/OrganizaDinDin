@@ -16,38 +16,6 @@ namespace OrganizaDinDin.Infrastructure.Repositories
             return [.. snapshot.Documents.Select(doc => doc.ConvertTo<Gasto>()).OrderByDescending(doc => doc.Data)];
         }
 
-        public async Task<List<Gasto>> GetFilteredAsync(string? descricao, List<int>? tipos, DateTime? dataInicio, DateTime? dataFim)
-        {
-            Query query = _firestoreDb.Collection(CollectionName);
-
-            if (tipos != null && tipos.Count != 0)
-            {
-                query = query.WhereIn("Tipo", tipos);
-            }
-
-            if (dataInicio.HasValue)
-            {
-                var dataInicioUtc = DateTime.SpecifyKind(dataInicio.Value.Date, DateTimeKind.Utc);
-                query = query.WhereGreaterThanOrEqualTo("DataTimestamp", Timestamp.FromDateTime(dataInicioUtc));
-            }
-
-            if (dataFim.HasValue)
-            {
-                var dataFimUtc = DateTime.SpecifyKind(dataFim.Value.Date.AddDays(1).AddSeconds(-1), DateTimeKind.Utc);
-                query = query.WhereLessThanOrEqualTo("DataTimestamp", Timestamp.FromDateTime(dataFimUtc));
-            }
-
-            var snapshot = await query.GetSnapshotAsync();
-            var gastos = snapshot.Documents.Select(doc => doc.ConvertTo<Gasto>()).ToList();
-
-            if (!string.IsNullOrWhiteSpace(descricao))
-            {
-                gastos = [.. gastos.Where(g => g.Descricao.Contains(descricao, StringComparison.OrdinalIgnoreCase))];
-            }
-
-            return [.. gastos.OrderByDescending(doc => doc.Data)];
-        }
-
         public async Task<Gasto?> GetByIdAsync(string id)
         {
             var docRef = _firestoreDb.Collection(CollectionName).Document(id);
@@ -74,18 +42,26 @@ namespace OrganizaDinDin.Infrastructure.Repositories
             return gasto;
         }
 
-        public async Task<bool> DeleteAsync(string id)
+        public async Task DesvincularCompromissoAsync(string compromissoId)
         {
-            try
+            var snapshot = await _firestoreDb.Collection(CollectionName)
+                .WhereEqualTo("CompromissoId", compromissoId)
+                .GetSnapshotAsync();
+
+            if (snapshot.Count == 0) return;
+
+            var batch = _firestoreDb.StartBatch();
+            foreach (var doc in snapshot.Documents)
             {
-                var docRef = _firestoreDb.Collection(CollectionName).Document(id);
-                await docRef.DeleteAsync();
-                return true;
+                batch.Update(doc.Reference, "CompromissoId", null);
             }
-            catch
-            {
-                return false;
-            }
+            await batch.CommitAsync();
+        }
+
+        public async Task DeleteAsync(string id)
+        {
+            var docRef = _firestoreDb.Collection(CollectionName).Document(id);
+            await docRef.DeleteAsync();
         }
     }
 }

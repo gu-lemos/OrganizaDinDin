@@ -8,7 +8,5 @@ namespace OrganizaDinDin.Application.DTOs
         public int TamanhoPagina { get; set; }
         public long ValorTotal { get; set; }
         public int TotalPaginas => (int)Math.Ceiling(TotalItens / (double)TamanhoPagina);
-        public bool TemPaginaAnterior => Pagina > 1;
-        public bool TemProximaPagina => Pagina < TotalPaginas;
     }
 }

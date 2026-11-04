@@ -1,57 +1,227 @@
 @using OrganizaDinDin.Domain.Enums
 @using OrganizaDinDin.Application.DTOs
-@model PagedResult<Gasto>
+@model GastosPageViewModel
 @{
-    ViewData["Title"] = "Listagem de Gastos";
+    var isCasamento = Model.Area == EAreaGasto.Casamento;
+    var indexUrl = isCasamento ? "/Casamento/Index" : "/Gastos/Index";
+    var titulo = isCasamento ? "Gastos do Casamento" : "Gastos do Apartamento";
+    var tiposDaArea = TipoGastoHelper.GetTipos(Model.Area);
+    var filtroCompromissoId = ViewBag.CompromissoId as string;
+    var compromissoFiltrado = Model.Compromissos.FirstOrDefault(c => c.Compromisso.Id == filtroCompromissoId);
+    var gastos = Model.Gastos;
+
+    ViewData["Title"] = titulo;
+    ViewData["Tema"] = isCasamento ? "casamento" : "apartamento";
 
     var baseQuery = Context.Request.Query
         .Where(q => q.Key != "pagina")
         .SelectMany(q => q.Value.Select(v => $"{q.Key}={Uri.EscapeDataString(v ?? "")}"))
         .ToList();
-    var baseUrl = "/Gastos/Index" + (baseQuery.Any() ? "?" + string.Join("&", baseQuery) + "&" : "?");
+    var baseUrl = indexUrl + (baseQuery.Any() ? "?" + string.Join("&", baseQuery) + "&" : "?");
 
-    ViewData["PaginationPage"] = Model.Pagina;
-    ViewData["PaginationTotalPages"] = Model.TotalPaginas;
+    ViewData["PaginationPage"] = gastos.Pagina;
+    ViewData["PaginationTotalPages"] = gastos.TotalPaginas;
     ViewData["PaginationBaseUrl"] = baseUrl;
 
-    var from = (Model.Pagina - 1) * Model.TamanhoPagina + 1;
-    var to = Math.Min(Model.Pagina * Model.TamanhoPagina, Model.TotalItens);
-    ViewData["PaginationInfo"] = Model.TotalItens > 0 ? $"Exibindo {from}–{to} de {Model.TotalItens} registro(s)" : "";
+    var from = (gastos.Pagina - 1) * gastos.TamanhoPagina + 1;
+    var to = Math.Min(gastos.Pagina * gastos.TamanhoPagina, gastos.TotalItens);
+    ViewData["PaginationInfo"] = gastos.TotalItens > 0 ? $"Exibindo {from}–{to} de {gastos.TotalItens} registro(s)" : "";
+
+    string Reais(long centavos) => "R$ " + (centavos / 100.0).ToString("N2");
+
+    var compromissosJson = Model.Compromissos.Select(c => new
+    {
+        c.Compromisso.Id,
+        c.Compromisso.Descricao,
+        c.Compromisso.ValorTotal,
+        c.Compromisso.TotalParcelas,
+        Tipo = (int)c.Compromisso.Tipo,
+        DataFim = c.Compromisso.DataFim?.ToString("yyyy-MM"),
+        c.ValorPago,
+        c.ValorRestante,
+        c.QuantidadePagamentos,
+        c.TemValorTotal,
+        c.MediaRecente,
+        c.TotalParcelasEfetivo,
+        c.ParcelasEstimadas
+    });
+
+    var abertas = Model.Compromissos.Where(c => !c.Quitado).ToList();
+    var quitadas = Model.Compromissos.Where(c => c.Quitado).ToList();
+    var percentualGeral = Model.TotalContratado > 0
+        ? (int)Math.Min(100, Math.Floor(Model.TotalPagoContratos * 100.0 / Model.TotalContratado))
+        : 0;
+
+    string Parcelas(CompromissoResumo c)
+    {
+        var total = c.TotalParcelasEfetivo;
+        if (!total.HasValue) return c.QuantidadePagamentos == 1 ? "1 parcela paga" : $"{c.QuantidadePagamentos} parcelas pagas";
+        return $"{c.QuantidadePagamentos} de {(c.ParcelasEstimadas ? "~" : "")}{total} {(total == 1 ? "parcela paga" : "parcelas pagas")}";
+    }
+
+    string LinkPagamentos(string id) => id == filtroCompromissoId ? indexUrl : $"{indexUrl}?compromissoId={Uri.EscapeDataString(id)}";
 }
 
 @section Styles {
     <link rel="stylesheet" href="~/css/gastos.css" asp-append-version="true" />
 }
 
-<div class="page-title d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
-    <h1>Listagem de Gastos</h1>
-    <button class="btn btn-dark" id="btnNovoGasto" data-bs-toggle="modal" data-bs-target="#gastoModal">
-        <i class="bi bi-plus-circle me-2"></i>Novo Gasto
-    </button>
+<div class="page-header">
+    <div class="page-header-titulo">
+        <span class="page-icon"><i class="bi @(isCasamento ? "bi-heart" : "bi-building")"></i></span>
+        <div>
+            <h1>@titulo</h1>
+            <p class="page-subtitulo">Contas, parcelas e tudo o que já foi pago</p>
+        </div>
+    </div>
+    <div class="page-acoes">
+        <button class="btn btn-outline-primary" id="btnNovoCompromisso">
+            <i class="bi bi-journal-plus me-2"></i>Nova Conta
+        </button>
+        <button class="btn btn-primary" id="btnNovoGasto">
+            <i class="bi bi-plus-circle me-2"></i>Novo Gasto
+        </button>
+    </div>
 </div>
 
-<div class="card mb-4 filter-card collapsed" id="filterCard">
-    <div class="card-header filter-card-header collapsed" id="filterCardHeader">
-        <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filtros</h5>
+@if (Model.Compromissos.Count == 0)
+{
+    <div class="estado-vazio mb-4">
+        <span>
+            <i class="bi bi-lightbulb me-2"></i>
+            Cadastre uma conta (ex.: @(isCasamento ? "Buffet — R$ 33.000,00" : "Entrada do apartamento")) e registre os pagamentos nela para ver quanto falta.
+        </span>
+        <button class="btn btn-sm btn-primary text-nowrap" data-acao="nova-conta">
+            <i class="bi bi-plus-circle me-1"></i>Cadastrar conta
+        </button>
+    </div>
+}
+else
+{
+    <section class="contas-painel surface mb-4" aria-label="Quanto falta pagar">
+        <div class="contas-resumo hero">
+            <div class="d-flex flex-wrap justify-content-between align-items-end gap-2">
+                <div>
+                    <div class="hero-label">Falta pagar@(Model.TemEstimativa ? " (aprox.)" : "")</div>
+                    <div class="hero-valor" data-countup>@(Model.TemEstimativa ? "~" : "")@Reais(Model.TotalRestante)</div>
+                </div>
+                <div class="text-md-end hero-detalhe">
+                    Já pago <strong>@Reais(Model.TotalPagoContratos)</strong> de @(Model.TemEstimativa ? "~" : "")@Reais(Model.TotalContratado)
+                    <span class="contas-resumo-pct">@percentualGeral%</span>
+                </div>
+            </div>
+            <div class="progress contas-progress mt-3" role="progressbar" aria-label="Percentual pago" aria-valuenow="@percentualGeral" aria-valuemin="0" aria-valuemax="100">
+                <div class="progress-bar" style="width: @percentualGeral%"></div>
+            </div>
+        </div>
+
+        <div class="contas-lista">
+            @foreach (var c in abertas)
+            {
+                var comp = c.Compromisso;
+                <div class="conta-linha @(comp.Id == filtroCompromissoId ? "ativa" : "")">
+                    <div class="conta-nome-col">
+                        <div class="conta-nome" title="@comp.Descricao">@comp.Descricao</div>
+                        <div class="conta-sub">Pago <span class="valor-positivo">@Reais(c.ValorPago)</span></div>
+                    </div>
+
+                    <div class="conta-progresso-col">
+                        <div class="progress contas-progress" role="progressbar" aria-label="Percentual pago de @comp.Descricao" aria-valuenow="@c.Percentual" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar" style="width: @c.Percentual%"></div>
+                        </div>
+                        <div class="conta-sub mt-1">
+                            @Parcelas(c)@(comp.DataFim.HasValue ? $" · até {comp.DataFim.Value:MM/yyyy}" : "")
+                        </div>
+                    </div>
+
+                    <div class="conta-falta-col">
+                        <div class="conta-sub">Falta</div>
+                        @if (c.TemValorTotal)
+                        {
+                            <div class="conta-falta-valor" data-countup>@Reais(c.ValorRestante)</div>
+                            <div class="conta-sub">de @Reais(comp.ValorTotal)</div>
+                        }
+                        else
+                        {
+                            <div class="conta-falta-valor" data-countup title="Média dos últimos @CompromissoResumo.PagamentosParaMedia pagamentos × parcelas restantes">~@Reais(c.ValorRestante)</div>
+                            <div class="conta-sub">estimativa</div>
+                        }
+                    </div>
+
+                    <div class="conta-acoes-col">
+                        <button class="btn btn-sm btn-primary" data-acao="pagar-conta" data-id="@comp.Id" title="Registrar pagamento">
+                            <i class="bi bi-plus-lg"></i><span class="ms-1">Pagar</span>
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-light" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Mais opções de @comp.Descricao">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="@LinkPagamentos(comp.Id!)"><i class="bi bi-list-ul me-2"></i>@(comp.Id == filtroCompromissoId ? "Ver todos os gastos" : "Ver pagamentos")</a></li>
+                                <li><button class="dropdown-item" data-acao="editar-conta" data-id="@comp.Id"><i class="bi bi-pencil me-2"></i>Editar conta</button></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><button class="dropdown-item text-danger" data-acao="excluir-conta" data-id="@comp.Id"><i class="bi bi-trash me-2"></i>Excluir conta</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (quitadas.Count > 0)
+            {
+                <details class="contas-quitadas">
+                    <summary><i class="bi bi-check-circle-fill me-2"></i>Quitadas (@quitadas.Count)</summary>
+                    @foreach (var c in quitadas)
+                    {
+                        var comp = c.Compromisso;
+                        <div class="conta-linha conta-linha-quitada @(comp.Id == filtroCompromissoId ? "ativa" : "")">
+                            <div class="conta-nome-col">
+                                <div class="conta-nome">@comp.Descricao</div>
+                                <div class="conta-sub">@Parcelas(c)</div>
+                            </div>
+                            <div class="conta-falta-col">
+                                <div class="conta-falta-valor valor-positivo">@Reais(c.ValorPago)</div>
+                                <div class="conta-sub">pago no total</div>
+                            </div>
+                            <div class="conta-acoes-col">
+                                <a class="btn btn-icon" href="@LinkPagamentos(comp.Id!)" title="Ver pagamentos" aria-label="Ver pagamentos de @comp.Descricao"><i class="bi bi-list-ul"></i></a>
+                                <button class="btn btn-icon" data-acao="editar-conta" data-id="@comp.Id" title="Editar conta" aria-label="Editar @comp.Descricao"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-icon btn-icon-danger" data-acao="excluir-conta" data-id="@comp.Id" title="Excluir conta" aria-label="Excluir @comp.Descricao"><i class="bi bi-trash"></i></button>
+                            </div>
+                        </div>
+                    }
+                </details>
+            }
+        </div>
+    </section>
+}
+
+<div class="filter-card mb-3 collapsed" id="filterCard">
+    <div class="filter-card-header collapsed" id="filterCardHeader" role="button" aria-controls="filterCardBody">
+        <h5><i class="bi bi-funnel me-2"></i>Filtros</h5>
         <i class="bi bi-chevron-up" id="filterToggleIcon"></i>
     </div>
 
     <div class="card-body collapsed" id="filterCardBody">
-        <form method="get" asp-action="Index" id="filterForm" novalidate>
+        <form method="get" action="@indexUrl" id="filterForm" novalidate>
+            @if (!string.IsNullOrEmpty(filtroCompromissoId))
+            {
+                <input type="hidden" name="compromissoId" value="@filtroCompromissoId" />
+            }
             <div class="row g-3">
                 <div class="col-md-4">
-                    <label for="filtroDescricao" class="form-label small">Descrição</label>
+                    <label for="filtroDescricao" class="form-label">Descrição</label>
                     <input type="text" class="form-control" id="filtroDescricao" name="descricao" value="@ViewBag.Descricao" placeholder="Buscar por descrição..." />
                 </div>
-                <div class="col-md-3">
-                    <label for="filtroTipo" class="form-label small">Tipo</label>
+                <div class="col-md-4">
+                    <label for="filtroTipo" class="form-label">Tipo</label>
                     <div class="dropdown-tipo">
                         <button type="button" class="form-control text-start dropdown-tipo-toggle" id="filtroTipo">
                             <span class="dropdown-tipo-text">Selecione os tipos...</span>
-                            <i class="bi bi-chevron-down float-end"></i>
+                            <i class="bi bi-chevron-down"></i>
                         </button>
                         <div class="dropdown-tipo-menu">
-                            @foreach (ETipoGasto tipo in Enum.GetValues(typeof(ETipoGasto)))
+                            @foreach (var tipo in tiposDaArea)
                             {
                                 var isSelected = ViewBag.Tipos != null && ((List<int>)ViewBag.Tipos).Contains((int)tipo);
                                 <label class="dropdown-tipo-item">
@@ -62,68 +232,99 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-2">
-                    <label for="filtroDataInicio" class="form-label small">Data Início</label>
+                <div class="col-6 col-md-2">
+                    <label for="filtroDataInicio" class="form-label">De</label>
                     <input type="date" class="form-control" id="filtroDataInicio" name="dataInicio" value="@ViewBag.DataInicio" />
                 </div>
-                <div class="col-md-2">
-                    <label for="filtroDataFim" class="form-label small">Data Fim</label>
+                <div class="col-6 col-md-2">
+                    <label for="filtroDataFim" class="form-label">Até</label>
                     <input type="date" class="form-control" id="filtroDataFim" name="dataFim" value="@ViewBag.DataFim" />
                 </div>
-                <div class="col-md-1 d-flex align-items-end gap-2">
-                    <button type="submit" class="btn btn-dark w-100" title="Aplicar filtros">
-                        <i class="bi bi-search"></i>
-                    </button>
-                </div>
             </div>
-            <div class="row mt-3">
-                <div class="col-12">
-                    <button type="button" class="btn btn-outline-secondary" id="btnLimparFiltros">
-                        <i class="bi bi-x-circle me-1"></i>
-                        <span>Limpar filtros</span>
-                    </button>
-                </div>
+            <div class="filtros-acoes">
+                <button type="button" class="btn btn-light" id="btnLimparFiltros">
+                    <i class="bi bi-x-circle me-1"></i>Limpar
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search me-1"></i>Filtrar
+                </button>
             </div>
         </form>
     </div>
 </div>
 
-<div class="table-responsive">
-    <table class="table table-hover table-striped">
+@if (compromissoFiltrado != null)
+{
+    <div class="filtro-ativo-chip mb-3">
+        <i class="bi bi-funnel-fill"></i>
+        <span>Pagamentos de <strong>@compromissoFiltrado.Compromisso.Descricao</strong></span>
+        <a href="@indexUrl" title="Remover filtro" aria-label="Remover filtro"><i class="bi bi-x-lg"></i></a>
+    </div>
+}
+
+<div class="tabela-card">
+    <table class="table table-hover tabela tabela-cartoes tabela-gastos">
         <thead>
             <tr>
                 <th>Descrição</th>
+                <th>Parcela</th>
                 <th>Tipo</th>
                 <th>Data</th>
-                <th>Valor</th>
-                <th class="text-center">Ações</th>
+                <th class="text-end">Valor</th>
+                <th class="c-acoes"><span class="visually-hidden">Ações</span></th>
             </tr>
         </thead>
         <tbody id="gastosTableBody">
-            @foreach (var gasto in Model.Itens)
+            @if (gastos.TotalItens == 0)
             {
+                <tr>
+                    <td colspan="6" class="tabela-vazia c-vazio">
+                        <i class="bi bi-receipt"></i>
+                        Nenhum gasto encontrado.
+                    </td>
+                </tr>
+            }
+            @foreach (var gasto in gastos.Itens)
+            {
+                Model.Parcelas.TryGetValue(gasto.Id ?? "", out var parcela);
                 <tr data-id="@gasto.Id">
-                    <td>@gasto.Descricao</td>
-                    <td><span class="badge badge-tipo bg-dark">@gasto.Tipo.GetDescription()</span></td>
-                    <td>@gasto.Data.ToString("dd/MM/yyyy")</td>
-                    <td class="valor-positivo">R$ @((gasto.Valor / 100.0).ToString("N2"))</td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-warning btn-editar" data-gasto-id="@gasto.Id" title="Editar">
-                            <i class="bi bi-pencil-fill"></i>
+                    <td class="c-desc c-principal">
+                        @gasto.Descricao
+                        @if (parcela != null && !string.Equals(parcela.CompromissoDescricao, gasto.Descricao, StringComparison.OrdinalIgnoreCase))
+                        {
+                            <span class="c-sub">@parcela.CompromissoDescricao</span>
+                        }
+                    </td>
+                    <td class="c-parcela">
+                        @if (parcela != null)
+                        {
+                            <span class="badge badge-parcela" title="Parcela @parcela.Rotulo de @parcela.CompromissoDescricao (numeração automática pela data)">@parcela.Rotulo</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-soft" title="Pagamento sem conta vinculada">Única</span>
+                        }
+                    </td>
+                    <td class="c-tipo"><span class="badge @gasto.Tipo.GetCorClasse()">@gasto.Tipo.GetDescription()</span></td>
+                    <td class="c-data">@gasto.Data.ToString("dd/MM/yyyy")</td>
+                    <td class="c-valor valor-positivo text-end">@Reais(gasto.Valor)</td>
+                    <td class="c-acoes">
+                        <button class="btn btn-icon btn-editar" data-gasto-id="@gasto.Id" title="Editar" aria-label="Editar @gasto.Descricao">
+                            <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger btn-deletar" data-gasto-id="@gasto.Id" title="Excluir">
-                            <i class="bi bi-trash-fill"></i>
+                        <button class="btn btn-icon btn-icon-danger btn-deletar" data-gasto-id="@gasto.Id" title="Excluir" aria-label="Excluir @gasto.Descricao">
+                            <i class="bi bi-trash"></i>
                         </button>
                     </td>
                 </tr>
             }
         </tbody>
-        @if (Model.TotalItens > 0)
+        @if (gastos.TotalItens > 0)
         {
             <tfoot>
-                <tr class="table-secondary">
-                    <td colspan="3" class="text-end fw-bold">TOTAL:</td>
-                    <td class="valor-positivo">R$ @((Model.ValorTotal / 100.0).ToString("N2"))</td>
+                <tr>
+                    <td colspan="4" class="text-md-end">Total</td>
+                    <td class="valor-positivo text-end" data-countup>@Reais(gastos.ValorTotal)</td>
                     <td></td>
                 </tr>
             </tfoot>
@@ -133,37 +334,50 @@
 
 @await Html.PartialAsync("_Pagination")
 
-<!-- Modal de Confirmação de Exclusão -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+<div class="modal fade modal-confirmacao" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirmar Exclusão</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="deleteModalLabel">Confirmar exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
-            <div class="modal-body">
-                <p class="mb-0">Tem certeza que deseja deletar este gasto?</p>
-                <p class="text-muted small mb-0">Esta ação não pode ser desfeita.</p>
+            <div class="modal-body d-flex gap-3 align-items-start">
+                <span class="modal-icone"><i class="bi bi-trash"></i></span>
+                <div>
+                    <p class="mb-1 fw-semibold" id="deleteModalMensagem">Tem certeza que deseja excluir este gasto?</p>
+                    <p class="text-muted small mb-0" id="deleteModalDetalhe">Esta ação não pode ser desfeita.</p>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" id="btnConfirmarDelete">Deletar</button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="btnConfirmarDelete">Excluir</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal para Criar/Editar Gasto -->
 <div class="modal fade" id="gastoModal" tabindex="-1" aria-labelledby="gastoModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header ">
                 <h5 class="modal-title" id="gastoModalLabel">Novo Gasto</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body">
                 <form id="gastoForm" novalidate>
                     <input type="hidden" id="gastoId" />
+
+                    <div class="mb-3">
+                        <label for="compromisso" class="form-label">Pagamento de qual conta? <span class="text-muted fw-normal small">(opcional)</span></label>
+                        <select class="form-select" id="compromisso">
+                            <option value="">Nenhuma — parcela única</option>
+                            @foreach (var c in Model.Compromissos)
+                            {
+                                <option value="@c.Compromisso.Id">@c.Compromisso.Descricao</option>
+                            }
+                        </select>
+                        <div class="form-text" id="compromissoHint"></div>
+                    </div>
 
                     <div class="mb-3">
                         <label for="descricao" class="form-label">Descrição</label>
@@ -180,7 +394,7 @@
                         <label for="tipo" class="form-label">Tipo</label>
                         <select class="form-select" id="tipo">
                             <option value="">Selecione um tipo</option>
-                            @foreach (ETipoGasto tipo in System.Enum.GetValues(typeof(ETipoGasto)))
+                            @foreach (var tipo in tiposDaArea)
                             {
                                 <option value="@((int)tipo)">@tipo.GetDescription()</option>
                             }
@@ -216,8 +430,71 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-dark" id="btnSalvarGasto">Salvar</button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnSalvarGasto">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="compromissoModal" tabindex="-1" aria-labelledby="compromissoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="compromissoModalLabel">Nova Conta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Uma conta é algo com valor total conhecido que você vai pagando aos poucos — ex.: @(isCasamento ? "Buffet de R$ 33.000,00" : "Entrada, Evolução de obra").</p>
+                <form id="compromissoForm" novalidate>
+                    <input type="hidden" id="compromissoId" />
+
+                    <div class="mb-3">
+                        <label for="compromissoDescricao" class="form-label">Nome da conta</label>
+                        <input type="text" class="form-control" id="compromissoDescricao" maxlength="100" placeholder="@(isCasamento ? "Ex.: Buffet" : "Ex.: Entrada do apartamento")">
+                        <div class="invalid-feedback">O nome deve ter entre 2 e 100 caracteres</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="compromissoTipo" class="form-label">Tipo</label>
+                        <select class="form-select" id="compromissoTipo">
+                            <option value="">Selecione um tipo</option>
+                            @foreach (var tipo in tiposDaArea)
+                            {
+                                <option value="@((int)tipo)">@tipo.GetDescription()</option>
+                            }
+                        </select>
+                        <div class="invalid-feedback">O tipo é obrigatório</div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-7">
+                            <label for="compromissoValorTotal" class="form-label">Valor total</label>
+                            <div class="input-group has-validation">
+                                <span class="input-group-text">R$</span>
+                                <input type="text" class="form-control" id="compromissoValorTotal" placeholder="0,00">
+                                <div class="invalid-feedback">Informe o valor total ou a data final</div>
+                            </div>
+                        </div>
+                        <div class="col-5">
+                            <label for="compromissoParcelas" class="form-label">Nº de parcelas</label>
+                            <input type="number" class="form-control" id="compromissoParcelas" min="1" max="600" placeholder="Opcional">
+                            <div class="invalid-feedback">Entre 1 e 600</div>
+                        </div>
+                        <div class="col-12">
+                            <label for="compromissoDataFim" class="form-label">Último pagamento previsto <span class="text-muted fw-normal small">(mês/ano, opcional)</span></label>
+                            <input type="month" class="form-control" id="compromissoDataFim">
+                            <div class="invalid-feedback">Informe o valor total ou a data final</div>
+                        </div>
+                    </div>
+                    <div class="form-text">
+                        Não sabe o valor total (ex.: evolução de obra)? Deixe <strong>0,00</strong> e informe só o último mês: o app conta as parcelas que faltam e estima o valor pela média dos últimos pagamentos.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnSalvarCompromisso">Salvar</button>
             </div>
         </div>
     </div>
@@ -225,7 +502,9 @@
 
 @section Scripts {
     <script>
-        window.gastosData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Itens));
+        window.gastosData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(gastos.Itens));
+        window.compromissosData = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(compromissosJson));
+        window.gastosIndexUrl = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(indexUrl));
     </script>
     <script src="~/js/gastos.js" asp-append-version="true"></script>
 }
